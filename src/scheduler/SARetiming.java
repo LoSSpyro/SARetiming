@@ -16,32 +16,39 @@ public class SARetiming {
 		temp = initTemp;
 	}
 	
-	public boolean doRandomMove() {
+	public Graph run() {
+		// TODO
+		return new Graph();
+	}
+	
+	
+	private boolean doRandomMove() {
 		// TODO
 		return false;
 	}
 	
-	public Map<Node, Pair<Integer, Integer>> possibleMoves() {
+	private Map<Node, Pair<Integer, Integer>> possibleMoves() {
 		// TODO
 		return new HashMap<Node, Pair<Integer, Integer>>();
 	}
 	
-	public boolean retimeNode(Node node, int iterationShift) {
+	private boolean retimeNode(Node node, int iterationShift) {
 		// TODO
 		return false;
 	}
 	
-	public boolean exitCriterion() {
+	private boolean exitCriterion() {
 		// TODO
 		return false;
 	}
 	
-	public boolean decideChange(float oldCost, float newCost) {
+	private boolean decideChange(float oldCost, float newCost) {
 		// TODO
 		return false;
 	}
 	
-	public float getGraphCost(Graph graph) {
+	
+	public static float getGraphCost(Graph graph) {
 		// TODO
 		return -1f;
 	}
