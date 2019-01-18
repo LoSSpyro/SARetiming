@@ -1,15 +1,13 @@
 package scheduler;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Random;
 
-import javafx.scene.control.RadioMenuItem;
-import javafx.util.Pair;
-
 public class SARetiming {
+	
+	// maximum change for the index shift of a node with wither no predecessors or successors (so can be infinitely shifted)
+	public static final int LOOSE_NODE_SHIFT_MAX = 4;
 	
 	private final Graph initGraph; 
 	private Graph graph;
@@ -32,7 +30,10 @@ public class SARetiming {
 		
 		while (temp > stopTemp) {
 			int acceptedChanges = 0;
+			System.out.println("\tDoing " + innerLoopIterations + " loops with temperature " + temp);
+			
 			for (int cntInner = 0; cntInner < innerLoopIterations; cntInner++) {
+				//System.out.println("\t\t" + cntInner);
 				Graph candidate = doRandomMove();
 				float deltaCost = getGraphCost(candidate) - getGraphCost(graph);
 				double r = Math.random();
@@ -44,6 +45,7 @@ public class SARetiming {
 			}
 			updateTemp((float) acceptedChanges / (float) innerLoopIterations);
 		}
+		System.out.println("Finished with temperature " + temp + " < " + stopTemp + "\n\n\n");
 		
 		return new Graph();
 	}
@@ -58,13 +60,14 @@ public class SARetiming {
 			y = 0.95f;
 		}
 		
+		System.out.println("\t\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
 		temp *= y;
 	}
 	
 	public void setSAParams(float initTemp, float stopTemp, int innerNum) {
 		this.initTemp = initTemp;
 		this.stopTemp = stopTemp;
-		innerLoopIterations = (int) Math.round(innerNum * Math.pow(graph.size(), 4./3.));
+		innerLoopIterations = (int) Math.round(innerNum * Math.pow(initGraph.size(), 4./3.));
 	}
 	
 	
@@ -84,13 +87,27 @@ public class SARetiming {
 		List<RetimingMove> result = new ArrayList<RetimingMove>();
 		
 		for (Node node : graph) {
+			//System.out.println(node.diagnose());
 			int minIn = Integer.MAX_VALUE;
 			for (Integer weight : node.allPredecessors().values()) {
+				//System.out.println("\t\t\tpred weight: " + weight);
 				minIn = Math.min(minIn, weight);
 			}
+			//System.out.println("\t\t\tminIn = " + minIn);
 			int minOut = Integer.MAX_VALUE;
 			for (Integer weight : node.allSuccessors().values()) {
+				//System.out.println("\t\t\tsucc weight: " + weight);
 				minOut = Math.min(minOut, weight);
+			}
+			//System.out.println("\t\t\tminOut = " + minOut);
+
+			if (minIn == Integer.MAX_VALUE) {
+				System.err.println("Warning: Found loose node (no predecessors). Using max shift " + LOOSE_NODE_SHIFT_MAX);
+				minIn = -LOOSE_NODE_SHIFT_MAX;
+			}
+			if (minOut == Integer.MAX_VALUE) {
+				System.err.println("Warning: Found loose node (no successors). Using max shift " + LOOSE_NODE_SHIFT_MAX);
+				minIn = LOOSE_NODE_SHIFT_MAX;
 			}
 			
 			for (int iterShift = -minIn; iterShift <= minOut; iterShift++) {

@@ -10,18 +10,34 @@ public class Main {
 			rc.parse(args[1]);
 		}
 		
-		Dot_reader dr = new Dot_reader(false);
+		Dot_reader dr = new Dot_reader(true);
 		if (args.length < 1) {
 			System.err.printf("Usage: scheduler dotfile%n");
 			System.exit(-1);
-		}else {
-			System.out.println("Scheduling "+args[0]);
+		} else {
+			System.out.println("Reading "+args[0]);
 			System.out.println();
 		}
 		
 		Graph g = dr.parse(args[0]);
 		System.out.printf("%s%n", g.diagnose());
 		
+		//defaultMain(g, args);
+		saRetiming(g);
+	}
+	
+	public static void saRetiming(Graph graph) {
+		System.out.println("\n\nRunning SA Retiming\n");
+		
+		SARetiming sa = new SARetiming(graph);
+		sa.setSAParams(100, 2, 10);
+		
+		Graph result = sa.run();
+		
+		System.out.println(graph.diagnose());
+	}
+	
+	public static void defaultMain(Graph g, String[] args) {
 		Scheduler s = new ASAP();
 		Schedule sched = s.schedule(g);
 		System.out.printf("%nASAP%n%s%n", sched.diagnose());
@@ -36,4 +52,5 @@ public class Main {
 		
 		sched.draw("schedules/ALAP_" + args[0].substring(args[0].lastIndexOf("/")+1));
 	}
+	
 }
