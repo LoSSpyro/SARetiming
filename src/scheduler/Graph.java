@@ -1,12 +1,14 @@
 package scheduler;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Formatter;
 
 public class Graph implements Iterable<Node> {
+	
 	private HashMap<Node, Node> nodes;
 		
 	public Graph() {
@@ -71,21 +73,21 @@ public class Graph implements Iterable<Node> {
 			n.reset();
 	}
 	
-	/*public Graph clone() {
-		Graph newg = new Graph();
-		Map<Node, Node> old_new = new HashMap();
-		for (Node nd : nodes.keySet()) {
-			Node newd = new Node(nd.id);
-			old_new.put(nd, newd);
-			newg.add(newd);
+	public Graph clone() {
+		Graph clone = new Graph();
+		Map<Node, Node> old_new = new HashMap<Node, Node>();
+		for (Node node : nodes.keySet()) {
+			Node nodeClone = new Node(node.id);
+			old_new.put(node, nodeClone);
+			clone.add(nodeClone);
 		}
 		
-		for (Node nd : old_new.keySet())
-			for (Node su : nd.successors())
-				newg.link(old_new.get(nd), old_new.get(su));
-		return newg;
+		for (Node node : old_new.keySet())
+			for (Node successor : node.allSuccessors().keySet()) {
+				clone.link(old_new.get(node), old_new.get(successor), node.allSuccessors().get(successor));
+			}
+		return clone;
 	}
-	*/
 	
 	public Integer dijkstra(Node src) {
 		HashMap<Node,Integer> dist = new HashMap<Node, Integer>();
@@ -164,4 +166,5 @@ public class Graph implements Iterable<Node> {
 		f.close();
 		return str;
 	}
+	
 }
