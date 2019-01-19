@@ -34,7 +34,7 @@ public class Main {
 		
 		Graph result = sa.run();
 		
-		System.out.println(graph.diagnose());
+		System.out.println(result.diagnose());
 	}
 	
 	public static void defaultMain(Graph g, String[] args) {

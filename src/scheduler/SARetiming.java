@@ -1,6 +1,7 @@
 package scheduler;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 
@@ -26,6 +27,7 @@ public class SARetiming {
 	}
 	public Graph run() {
 		graph = initGraph;
+		float oldCost = getGraphCost(graph);
 		temp = initTemp;
 		
 		while (temp > stopTemp) {
@@ -35,19 +37,34 @@ public class SARetiming {
 			for (int cntInner = 0; cntInner < innerLoopIterations; cntInner++) {
 				//System.out.println("\t\t" + cntInner);
 				Graph candidate = doRandomMove();
-				float deltaCost = getGraphCost(candidate) - getGraphCost(graph);
+				float newCost = getGraphCost(candidate);
+				float deltaCost = newCost - oldCost;
 				double r = Math.random();
 				if (r < Math.exp(-deltaCost / temp)) {
 					// accept candidate
 					graph = candidate;
+					oldCost = newCost;
 					acceptedChanges++;
+					System.out.println("\t\t\tAccepted move with probability " + (Math.round(100*Math.exp(-deltaCost / temp))) + "%");
+				} else {
+					System.out.println("\t\t\tRejected move");
 				}
 			}
 			updateTemp((float) acceptedChanges / (float) innerLoopIterations);
 		}
 		System.out.println("Finished with temperature " + temp + " < " + stopTemp + "\n\n\n");
 		
-		return new Graph();
+		return graph;
+	}
+	public Graph runTest() {
+		graph = initGraph;
+		System.out.println("Old cost: " + getGraphCost(graph));
+		
+		Graph candidate = doRandomMove();
+
+		System.out.println("New cost: " + getGraphCost(candidate));
+		
+		return candidate;
 	}
 	
 	void updateTemp(float alpha) {
@@ -78,6 +95,7 @@ public class SARetiming {
 		int moveIndex = new Random().nextInt(possibleMoves.size());
 		RetimingMove move = possibleMoves.get(moveIndex);
 		
+		System.out.println("\t\tExecuting random " + move);
 		boolean success = move.execute();
 		
 		return success ? result : null;
@@ -111,6 +129,9 @@ public class SARetiming {
 			}
 			
 			for (int iterShift = -minIn; iterShift <= minOut; iterShift++) {
+				if (iterShift == 0) {
+					continue;
+				}
 				result.add(new RetimingMove(node, new Integer(iterShift)));				
 			}
 		}
@@ -121,7 +142,31 @@ public class SARetiming {
 	
 	public static float getGraphCost(Graph graph) {
 		// TODO
-		return -1f;
+		return (float) longestZeroWeightedPath(graph);
+	}
+	
+	public static int longestZeroWeightedPath(Graph graph) {
+		int result = 0;
+		for (Node node : graph) {
+			int recursiveResult = longestPathFromNode(node);
+			if (recursiveResult > result) {
+				result = recursiveResult;
+			}
+		}
+		System.out.println("\t\t\tLZWP = " + result);
+		return result;
+	}
+	private static int longestPathFromNode(Node node) {
+		//System.out.println("\t\t\t\tLPFN: Node " + node.id + " - entry");
+		int result = 0;
+		for (Node successor : node.successors()) {
+			int recursiveResult = longestPathFromNode(successor);
+			if (recursiveResult > result) {
+				result = recursiveResult;
+			}
+		}
+		//System.out.println("\t\t\t\tLPFN: Node " + node.id + " has length " + (result + 1));
+		return result + 1;
 	}
 	
 	
@@ -156,18 +201,21 @@ public class SARetiming {
 		
 		public boolean execute() {
 			if (!isMoveValid(node, iterationShift) || wasExecuted) {
+				System.err.println("Warning: Move wasn't executed");
 				return false;
 			}
 			
 			for (Node predecessor : node.allPredecessors().keySet()) {
 				Integer newWeight = node.allPredecessors().get(predecessor).intValue() + iterationShift;
-				node.allPredecessors().put(predecessor, newWeight);
-				predecessor.allSuccessors().put(node, newWeight);
+				//System.out.println("\t\tSetting new weight " + newWeight + " for edge between " + predecessor + " and " + node + " (old weight: " + node.allPredecessors().get(predecessor).intValue() + ")");
+				node.prepend(predecessor, newWeight);
+				predecessor.append(node, newWeight);
 			}
 			for (Node successor : node.allSuccessors().keySet()) {
 				Integer newWeight = node.allSuccessors().get(successor).intValue() - iterationShift;
-				node.allSuccessors().put(successor, newWeight);
-				successor.allPredecessors().put(node, newWeight);
+				//System.out.println("\t\tSetting new weight " + newWeight + " for edge between " + node + " and " + successor + " (old weight: " + node.allSuccessors().get(successor).intValue() + ")");
+				node.append(successor, newWeight);
+				successor.prepend(node, newWeight);
 			}
 			
 			wasExecuted = true;
@@ -192,6 +240,10 @@ public class SARetiming {
 			
 			wasExecuted = false;
 			return true;
+		}
+		
+		public String toString() {
+			return "RetimingMove: Node " + node.id + ", shift " + iterationShift;
 		}
 		
 	}
