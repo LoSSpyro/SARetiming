@@ -19,6 +19,10 @@ public class SARetiming {
 	
 	public SARetiming(Graph graph) {
 		initGraph = graph;
+		this.graph = graph;
+		initTemp = findInitTemp();
+		stopTemp = 0.1f;
+		innerLoopIterations = (int) Math.round(10 * Math.pow(initGraph.size(), 4./3.));
 	}
 	
 	public Graph run(float initTemp, float stopTemp, int innerNum) {
@@ -29,6 +33,8 @@ public class SARetiming {
 		graph = initGraph;
 		float oldCost = getGraphCost(graph);
 		temp = initTemp;
+		float initCost = oldCost;
+		float minCost = oldCost;
 		
 		while (temp > stopTemp) {
 			int acceptedChanges = 0;
@@ -38,21 +44,28 @@ public class SARetiming {
 				//System.out.println("\t\t" + cntInner);
 				Graph candidate = doRandomMove();
 				float newCost = getGraphCost(candidate);
-				float deltaCost = newCost - oldCost;
+				if (newCost < minCost) {
+					minCost = newCost;
+				}
+				float deltaCost = newCost - oldCost; // < 0: improvement
 				double r = Math.random();
 				if (r < Math.exp(-deltaCost / temp)) {
 					// accept candidate
 					graph = candidate;
 					oldCost = newCost;
 					acceptedChanges++;
-					System.out.println("\t\t\tAccepted move with probability " + (Math.round(100*Math.exp(-deltaCost / temp))) + "%");
+					System.out.println("\t\t\tAccepted move with probability " + (Math.round(100*Math.exp(-deltaCost / temp))) + "% (deltaC = " + deltaCost + ")");
 				} else {
 					System.out.println("\t\t\tRejected move");
 				}
 			}
 			updateTemp((float) acceptedChanges / (float) innerLoopIterations);
 		}
-		System.out.println("Finished with temperature " + temp + " < " + stopTemp + "\n\n\n");
+		System.out.println("\n\nFinished with temperature " + temp + " < " + stopTemp);
+		System.out.println("Initial temperature was " + initTemp);
+		System.out.println("Initial cost was " + initCost);
+		System.out.println("Final cost is " + oldCost);
+		System.out.println("Minimal found cost was " + minCost + "\n\n\n");
 		
 		return graph;
 	}
@@ -67,7 +80,29 @@ public class SARetiming {
 		return candidate;
 	}
 	
-	void updateTemp(float alpha) {
+	private float findInitTemp() {
+		int n = initGraph.size();
+		float[] costs = new float[n];
+		float average = 0f;
+		for (int i = 0; i < n; i++) {
+			float cost = getGraphCost(doRandomMove());
+			costs[i] = cost;
+			average += cost;
+		}
+		average /= (float) n;
+		float standardDeviation = 0;
+		for (int i = 0; i < n; i++) {
+			float diffAv = costs[i] - average;
+			standardDeviation += diffAv * diffAv;
+		}
+		standardDeviation /= (float) n;
+		float initTemp = 20*standardDeviation;
+		
+		System.out.println("Initial temperature determined as " + initTemp);
+		return initTemp;
+	}
+	
+	private void updateTemp(float alpha) {
 		float y = 0.8f;
 		if (alpha > 0.96f) {
 			y = 0.5f;
@@ -77,7 +112,7 @@ public class SARetiming {
 			y = 0.95f;
 		}
 		
-		System.out.println("\t\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
+		System.out.println("\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
 		temp *= y;
 	}
 	

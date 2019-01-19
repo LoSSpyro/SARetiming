@@ -30,11 +30,11 @@ public class Main {
 		System.out.println("\n\nRunning SA Retiming\n");
 		
 		SARetiming sa = new SARetiming(graph);
-		sa.setSAParams(100, 2, 10);
+		//sa.setSAParams(100, 0.1f, 10);
 		
 		Graph result = sa.run();
 		
-		System.out.println(result.diagnose());
+		//System.out.println(result.diagnose());
 	}
 	
 	public static void defaultMain(Graph g, String[] args) {
