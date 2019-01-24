@@ -24,3 +24,6 @@ hs_err_pid*
 
 /schedules/*
 /bin/
+/Commands/*
+/modGraphs/*
+/graphs/*

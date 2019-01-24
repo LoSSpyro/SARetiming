@@ -1,9 +1,14 @@
 package scheduler;
 
 import java.util.Iterator;
+import java.util.Map;
 import java.util.HashMap;
 import java.util.Set;
 import java.util.HashSet;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Formatter;
 
 public class Graph implements Iterable<Node> {
@@ -164,4 +169,30 @@ public class Graph implements Iterable<Node> {
 		f.close();
 		return str;
 	}
+	
+	public void draw(String dotFileName) {
+		try {
+			BufferedWriter dotFile = new BufferedWriter(new FileWriter(dotFileName));
+	
+
+			dotFile.write("//do not use DOT to generate pdf use NEATO or FDP\n");
+			dotFile.write("digraph depgraph {\n");
+			
+			for (Node nd : this) {
+				dotFile.write(nd + " [label=\"" + nd + " d:" + nd.getDelay() + "\"];\n");
+				for (Node succ : nd.allSuccessors().keySet()) {
+					dotFile.write(nd + " -> " + succ);
+					if (nd.getSuccWeight(succ) > 0)
+						dotFile.write(" [constrain=false,color=blue,label=\"" + nd.getSuccWeight(succ) + "\"];");
+					dotFile.write("\n");
+				}
+			}
+			dotFile.write("}");	
+			dotFile.flush();
+			dotFile.close();
+		} catch (IOException e) {
+			System.out.println(e.getMessage());
+		}
+	}
 }
+
