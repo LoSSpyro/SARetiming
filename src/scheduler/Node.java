@@ -2,6 +2,7 @@ package scheduler;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.Formatter;
 
 /**
@@ -33,6 +34,9 @@ public class Node {
 	 * Resource type of this node
 	 */
 	private RT rt;
+	
+	private boolean blocked = false;
+	private ArrayList<Node> blockedNodes = new ArrayList<Node>();
 	
 	/**
 	 * @param id - ID of the new node
@@ -100,6 +104,16 @@ public class Node {
 		return successors.remove(n)!=null || predecessors.remove(n)!=null;
 	}
 	
+	public boolean removeFromPred(Node n) {
+		unhandled_pred.remove(n);
+		return predecessors.remove(n) != null;
+	}
+	
+	public boolean removeFromSucc(Node n) {
+		unhandled_succ.remove(n);
+		return successors.remove(n) != null;
+	} 
+	
 	/**
 	 * Mark a node as handled. Useful during scheduling.
 	 * @param n - Node to mark handled.
@@ -157,6 +171,16 @@ public class Node {
 		unhandled_pred = predecessors();
 	}
 	
+	public void resetSucc() {
+		successors = new HashMap<Node, Integer>();
+		unhandled_succ = new HashSet<Node>();
+	}
+	
+	public void resetPred() {
+		predecessors = new HashMap<Node, Integer>();
+		unhandled_pred = new HashSet<Node>();	
+	}
+	
 	/**
 	 * Return all successors of this node within one Iteration. Means all successors with edge weight 0
 	 * @return A set of all successors of this iteration
@@ -199,6 +223,20 @@ public class Node {
 	@SuppressWarnings("unchecked")
 	public HashMap<Node,Integer> allPredecessors(){
 		return (HashMap<Node,Integer>)predecessors.clone();
+	}
+	
+	public Node getPred(Node nd) {
+		for (Node n: predecessors.keySet() ) {
+			if (n.equals(nd)) return n;
+		}
+		return null;
+	}
+	
+	public boolean containsItSelf() {
+		for (Node nd : successors.keySet()) {
+			if (nd.equals(this)) return true;
+		}
+		return false;
 	}
 		
 	public String toString() {
@@ -286,5 +324,30 @@ public class Node {
 	 */
 	public int getDelay(){
 		return rt.delay;
+	}
+	
+	public void block() {
+		this.blocked = true;
+	}
+	
+	public void unblock() {
+		this.blocked = false;
+		for (Node n : blockedNodes) {
+			blockedNodes.remove(n);
+			if (n.blocked) n.unblock();
+		}
+	}
+	
+	public boolean isBlocked() {
+		return blocked;
+	}
+	
+	public boolean hasBlockedNode(Node nd) {
+		if (blockedNodes.contains(nd)) return true;
+		else return false;
+	}
+	
+	public void addBlockedNode(Node nd) {
+		blockedNodes.add(nd);
 	}
 }
