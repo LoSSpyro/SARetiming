@@ -32,7 +32,10 @@ public class Main {
 		SARetiming sa = new SARetiming(graph);
 		//sa.setSAParams(100, 0.1f, 10);
 		
+		long startTime = System.currentTimeMillis();
 		Graph result = sa.run();
+		float calcTime = (float) (System.currentTimeMillis() - startTime) / 1000f;
+		System.out.println("Calculation time: " + calcTime + "s");
 		
 		//System.out.println(result.diagnose());
 	}

@@ -7,7 +7,7 @@ import java.util.Random;
 public class SARetiming {
 	
 	// maximum change for the index shift of a node with wither no predecessors or successors (so can be infinitely shifted)
-	public static final int LOOSE_NODE_SHIFT_MAX = 4;
+	public static final int LOOSE_NODE_SHIFT_MAX = 5;
 	
 	private final Graph initGraph; 
 	private Graph graph;
@@ -68,34 +68,33 @@ public class SARetiming {
 		
 		return graph;
 	}
-	public Graph runTest() {
-		graph = initGraph;
-		System.out.println("Old cost: " + getGraphCost(graph));
-		
-		Graph candidate = doRandomMove();
-
-		System.out.println("New cost: " + getGraphCost(candidate));
-		
-		return candidate;
-	}
 	
 	private float findInitTemp() {
-		int n = initGraph.size();
-		float[] costs = new float[n];
-		float average = 0f;
-		for (int i = 0; i < n; i++) {
-			float cost = getGraphCost(doRandomMove());
-			costs[i] = cost;
-			average += cost;
+		graph = initGraph;
+		for (int tries = 0; tries < 5; tries++) {
+			int n = initGraph.size();
+			float[] costs = new float[n];
+			float average = 0f;
+			for (int i = 0; i < n; i++) {
+				graph = doRandomMove();
+				float cost = getGraphCost(graph);
+				costs[i] = cost;
+				average += cost;
+			}
+			average /= (float) n;
+			float standardDeviation = 0;
+			for (int i = 0; i < n; i++) {
+				float diffAv = costs[i] - average;
+				standardDeviation += diffAv * diffAv;
+			}
+			standardDeviation /= (float) n;
+			initTemp = 20*standardDeviation;
+			
+			if (initTemp > 1) {
+				break;
+			}
+			System.err.println("Calculated initital temperature of " + initTemp + ". Trying again...");
 		}
-		average /= (float) n;
-		float standardDeviation = 0;
-		for (int i = 0; i < n; i++) {
-			float diffAv = costs[i] - average;
-			standardDeviation += diffAv * diffAv;
-		}
-		standardDeviation /= (float) n;
-		float initTemp = 20*standardDeviation;
 		
 		System.out.println("Initial temperature determined as " + initTemp);
 		return initTemp;
@@ -159,14 +158,14 @@ public class SARetiming {
 			}
 			if (minOut == Integer.MAX_VALUE) {
 				System.err.println("Warning: Found loose node (no successors). Using max shift " + LOOSE_NODE_SHIFT_MAX);
-				minIn = LOOSE_NODE_SHIFT_MAX;
+				minOut = LOOSE_NODE_SHIFT_MAX;
 			}
 			
 			for (int iterShift = -minIn; iterShift <= minOut; iterShift++) {
 				if (iterShift == 0) {
 					continue;
 				}
-				result.add(new RetimingMove(node, new Integer(iterShift)));				
+				result.add(new RetimingMove(node, new Integer(iterShift)));
 			}
 		}
 		
@@ -199,8 +198,8 @@ public class SARetiming {
 				result = recursiveResult;
 			}
 		}
-		//System.out.println("\t\t\t\tLPFN: Node " + node.id + " has length " + (result + 1));
-		return result + 1;
+		//System.out.println("\t\t\t\tLPFN: Path to node " + node + " has length " + (result + node.getDelay()));
+		return result + node.getDelay();
 	}
 	
 	

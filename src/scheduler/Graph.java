@@ -78,13 +78,13 @@ public class Graph implements Iterable<Node> {
 		Map<Node, Node> old_new = new HashMap<Node, Node>();
 		for (Node node : nodes.keySet()) {
 			Node nodeClone = new Node(node.id);
+			nodeClone.setRT(node.getRT());
 			old_new.put(node, nodeClone);
 			clone.add(nodeClone);
 		}
 		
 		for (Node node : old_new.keySet())
 			for (Node successor : node.allSuccessors().keySet()) {
-				
 				clone.link(old_new.get(node), old_new.get(successor), new Integer(node.allSuccessors().get(successor)));
 			}
 		return clone;
