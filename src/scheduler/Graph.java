@@ -172,9 +172,15 @@ public class Graph implements Iterable<Node> {
 		return str;
 	}
 
-	public void draw(String dotFileName) {
+	public void draw(String dir, String dotFileName) {
 		try {
-			BufferedWriter dotFile = new BufferedWriter(new FileWriter(dotFileName));
+
+			String[] arguments = dotFileName.split("/");
+			String file = arguments[arguments.length-1];
+			
+			System.out.println("Draw to: " + dir + file);
+			
+			BufferedWriter dotFile = new BufferedWriter(new FileWriter(dir + file));
 	
 
 			dotFile.write("//do not use DOT to generate pdf use NEATO or FDP\n");
@@ -184,8 +190,10 @@ public class Graph implements Iterable<Node> {
 				dotFile.write(nd + " [label=\"" + nd + " d:" + nd.getDelay() + "\"];\n");
 				for (Node succ : nd.allSuccessors().keySet()) {
 					dotFile.write(nd + " -> " + succ);
-					if (nd.getSuccWeight(succ) > 0)
+					if (nd.getSuccWeight(succ) > 0) {
 						dotFile.write(" [constrain=false,color=blue,label=\"" + nd.getSuccWeight(succ) + "\"];");
+					}
+					else dotFile.write(";");
 					dotFile.write("\n");
 				}
 			}
