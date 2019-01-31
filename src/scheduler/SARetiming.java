@@ -6,9 +6,9 @@ import java.util.Random;
 
 public class SARetiming {
 	
-	public static final float DEFAULT_STOP_TEMP = 1f;
+	public static final float DEFAULT_STOP_TEMP = .1f;
 	// maximum change for the index shift of a node with wither no predecessors or successors (so can be infinitely shifted)
-	public static final int LOOSE_NODE_SHIFT_MAX = 5;
+	public static final int LOOSE_NODE_SHIFT_MAX = 0;
 	
 	private final Graph initGraph; 
 	private Graph graph;
@@ -38,6 +38,8 @@ public class SARetiming {
 		foundLooseNodes = false;
 		float initCost = oldCost;
 		float minCost = oldCost;
+		Graph bestGraph = initGraph;
+		System.out.println("Initial cost is " + initCost);
 		
 		while (temp > stopTemp) {
 			int acceptedChanges = 0;
@@ -49,10 +51,11 @@ public class SARetiming {
 				float newCost = getGraphCost(candidate, print);
 				if (newCost < minCost) {
 					minCost = newCost;
+					bestGraph = candidate;
 				}
 				float deltaCost = newCost - oldCost; // < 0: improvement
 				double r = Math.random();
-				if (r < Math.exp(-deltaCost / temp)) {
+				if (r < Math.exp(-10000*deltaCost / temp)) {
 					// accept candidate
 					graph = candidate;
 					oldCost = newCost;
@@ -67,22 +70,25 @@ public class SARetiming {
 				}
 			}
 			updateTemp((float) acceptedChanges / (float) innerLoopIterations, print);
+			System.out.println("\tCurrent cost = " + oldCost);
 		}
 		System.out.println("\n\nFinished with temperature " + temp + " < " + stopTemp);
 		System.out.println("Initial temperature was " + initTemp);
 		System.out.println("Initial cost was " + initCost);
 		System.out.println("MinII is " + minII.getMinII(graph, false));
-		System.out.println("Minimal found cost was " + minCost);
-		System.out.println("Final cost is " + oldCost);
+		System.out.println("Minimal found cost is " + minCost);
+		System.out.println("Final SA cost is " + oldCost);
 		if (Math.floor(minCost) < Math.floor(oldCost)) {
-			System.err.println("Caution: the best found solution wasn't delivered!");
+			System.err.println("Caution: the best found solution wasn't delivered by SA!");
 		}
+		System.out.println("Shift sum for best solution: " + shiftSum(bestGraph));
+		System.out.println("Shift sum for SA solution: " + shiftSum(graph));
 		if (foundLooseNodes) {
 			System.err.println("Warning: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
 		}
 		System.out.println("\n\n\n");
 		
-		return graph;
+		return bestGraph;
 	}
 	
 	private float findInitTemp(boolean print) {
@@ -106,7 +112,7 @@ public class SARetiming {
 			standardDeviation /= (float) n;
 			initTemp = 20*standardDeviation;
 			
-			if (initTemp > 1) {
+			if (initTemp > 2) {
 				break;
 			}
 			System.err.println("Calculated initital temperature of " + initTemp + ". Trying again...");
@@ -126,9 +132,7 @@ public class SARetiming {
 			y = 0.95f;
 		}
 		
-		if (print) {
-			System.out.println("\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
-		}
+		System.out.println("\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
 		temp *= y;
 	}
 	
@@ -233,11 +237,20 @@ public class SARetiming {
 		return result + node.getDelay();
 	}
 	
-	private static int shiftSum(Graph graph) {
+	public static int shiftSum(Graph graph) {
 		int result = 0;
 		for (Node node : graph) {
 			for (Node successor : node.allSuccessors().keySet()) {
 				result += node.allSuccessors().get(successor);
+			}
+		}
+		return result;
+	}
+	public static int shiftMax(Graph graph) {
+		int result = 0;
+		for (Node node : graph) {
+			for (Node successor : node.allSuccessors().keySet()) {
+				result = Math.max(result, node.allSuccessors().get(successor));
 			}
 		}
 		return result;
