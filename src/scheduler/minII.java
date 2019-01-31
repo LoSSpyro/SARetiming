@@ -6,7 +6,7 @@ import java.util.Vector;
 
 public class minII {
 
-	public static Integer getMinII(Graph g) {
+	public static Integer getMinII(Graph g, boolean print) {
 		ElementaryCyclesSearch ecs = new ElementaryCyclesSearch(g);
 		List<List<Node>> cycles = ecs.getElementaryCycles();
 		
@@ -17,22 +17,23 @@ public class minII {
 				cycles.add(cycle);
 			}
 		}
-		System.out.println("Found following cycles:");
-		System.out.println("------------------------");
-		for (int i = 0; i < cycles.size(); i++) {
-			List<Node> cycle = cycles.get(i);
-			for (int j = 0; j < cycle.size(); j++) {
-				Node node = cycle.get(j);
-				if (j < cycle.size() - 1) {
-					System.out.print(node + " -> ");
-				} else {
-					System.out.println(node);
+		if (print) {
+			System.out.println("Found following cycles:");
+			System.out.println("------------------------");
+			for (int i = 0; i < cycles.size(); i++) {
+				List<Node> cycle = cycles.get(i);
+				for (int j = 0; j < cycle.size(); j++) {
+					Node node = cycle.get(j);
+					if (j < cycle.size() - 1) {
+						System.out.print(node + " -> ");
+					} else {
+						System.out.println(node);
+					}
 				}
+				System.out.print("\n");
 			}
-			System.out.print("\n");
+			System.out.println("------------------------");
 		}
-		System.out.println("------------------------");
-		
 		
 		Vector<Integer> IIs = new Vector<Integer>();;
 		for (int i = 0; i < cycles.size(); i++) {
