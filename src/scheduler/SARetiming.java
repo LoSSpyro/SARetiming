@@ -6,9 +6,9 @@ import java.util.Random;
 
 public class SARetiming {
 	
-	public static final float DEFAULT_STOP_TEMP = .1f;
+	public static final float DEFAULT_STOP_TEMP = .5f;
 	// maximum change for the index shift of a node with wither no predecessors or successors (so can be infinitely shifted)
-	public static final int LOOSE_NODE_SHIFT_MAX = 0;
+	public static final int LOOSE_NODE_SHIFT_MAX = 5;
 	
 	private final Graph initGraph; 
 	private Graph graph;
@@ -54,8 +54,8 @@ public class SARetiming {
 					bestGraph = candidate;
 				}
 				float deltaCost = newCost - oldCost; // < 0: improvement
-				double r = Math.random();
-				if (r < Math.exp(-10000*deltaCost / temp)) {
+				float r = (float) Math.random();
+				if (r < Math.exp(-1000*deltaCost / temp)) {
 					// accept candidate
 					graph = candidate;
 					oldCost = newCost;
@@ -69,7 +69,8 @@ public class SARetiming {
 					}
 				}
 			}
-			updateTemp((float) acceptedChanges / (float) innerLoopIterations, print);
+			float alpha = (float) acceptedChanges / (float) innerLoopIterations;
+			updateTemp(alpha, print);
 			System.out.println("\tCurrent cost = " + oldCost);
 		}
 		System.out.println("\n\nFinished with temperature " + temp + " < " + stopTemp);
@@ -83,6 +84,8 @@ public class SARetiming {
 		}
 		System.out.println("Shift sum for best solution: " + shiftSum(bestGraph));
 		System.out.println("Shift sum for SA solution: " + shiftSum(graph));
+		System.out.println("Shift max for best solution: " + shiftMax(bestGraph));
+		System.out.println("Shift max for SA solution: " + shiftMax(graph));
 		if (foundLooseNodes) {
 			System.err.println("Warning: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
 		}
@@ -201,7 +204,7 @@ public class SARetiming {
 		// TODO
 		float achievedII = longestZeroWeightedPath(graph);
 		float shiftSum = shiftSum(graph);
-		float weightedShiftSum = (float) (1 - Math.exp(-shiftSum/100000f));
+		float weightedShiftSum = (float) (1 - Math.exp(-shiftSum/1000f));
 		if (weightedShiftSum >= 1f) {
 			System.err.println("Warning: shift sum to big for scaling factor");
 			System.exit(1);
