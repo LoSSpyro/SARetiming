@@ -6,6 +6,7 @@ import java.util.Random;
 
 public class SARetiming {
 	
+	public static final float DEFAULT_STOP_TEMP = 1f;
 	// maximum change for the index shift of a node with wither no predecessors or successors (so can be infinitely shifted)
 	public static final int LOOSE_NODE_SHIFT_MAX = 5;
 	
@@ -15,13 +16,15 @@ public class SARetiming {
 	private float stopTemp;
 	private float temp;
 	private int innerLoopIterations;
+	private boolean foundLooseNodes;
 	
 	public SARetiming(Graph graph) {
 		initGraph = graph;
 		this.graph = graph;
 		initTemp = findInitTemp();
-		stopTemp = 0.1f;
+		stopTemp = DEFAULT_STOP_TEMP;
 		innerLoopIterations = (int) Math.round(10 * Math.pow(initGraph.size(), 4./3.));
+		foundLooseNodes = false;
 	}
 	
 	public Graph run(float initTemp, float stopTemp, int innerNum) {
@@ -32,6 +35,7 @@ public class SARetiming {
 		graph = initGraph;
 		float oldCost = getGraphCost(graph);
 		temp = initTemp;
+		foundLooseNodes = false;
 		float initCost = oldCost;
 		float minCost = oldCost;
 		
@@ -63,8 +67,16 @@ public class SARetiming {
 		System.out.println("\n\nFinished with temperature " + temp + " < " + stopTemp);
 		System.out.println("Initial temperature was " + initTemp);
 		System.out.println("Initial cost was " + initCost);
+		System.out.println("MinII is " + minII.getMinII(graph, true));
 		System.out.println("Final cost is " + oldCost);
-		System.out.println("Minimal found cost was " + minCost + "\n\n\n");
+		System.out.println("Minimal found cost was " + minCost);
+		if (minCost < oldCost) {
+			System.err.println("Caution: the best found solution wasn't delivered!");
+		}
+		if (foundLooseNodes) {
+			System.err.println("Warning: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
+		}
+		System.out.println("\n\n\n");
 		
 		return graph;
 	}
@@ -153,11 +165,11 @@ public class SARetiming {
 			//System.out.println("\t\t\tminOut = " + minOut);
 
 			if (minIn == Integer.MAX_VALUE) {
-				System.err.println("Warning: Found loose node (no predecessors). Using max shift " + LOOSE_NODE_SHIFT_MAX);
+				foundLooseNodes = true;
 				minIn = -LOOSE_NODE_SHIFT_MAX;
 			}
 			if (minOut == Integer.MAX_VALUE) {
-				System.err.println("Warning: Found loose node (no successors). Using max shift " + LOOSE_NODE_SHIFT_MAX);
+				foundLooseNodes = true;
 				minOut = LOOSE_NODE_SHIFT_MAX;
 			}
 			
@@ -175,7 +187,13 @@ public class SARetiming {
 	
 	public static float getGraphCost(Graph graph) {
 		// TODO
-		return (float) longestZeroWeightedPath(graph);
+		float achievedII = longestZeroWeightedPath(graph);
+		float shiftSum = shiftSum(graph);
+		float weightedShiftSum = (float) (1 - Math.exp(-shiftSum/100f));
+		float cost = achievedII + weightedShiftSum;
+		System.out.println("\t\t\tCost = " + cost);
+		System.out.println("weightedShiftSum = " + weightedShiftSum);
+		return cost;
 	}
 	
 	public static int longestZeroWeightedPath(Graph graph) {
@@ -186,7 +204,6 @@ public class SARetiming {
 				result = recursiveResult;
 			}
 		}
-		System.out.println("\t\t\tLZWP = " + result);
 		return result;
 	}
 	private static int longestPathFromNode(Node node) {
@@ -202,6 +219,15 @@ public class SARetiming {
 		return result + node.getDelay();
 	}
 	
+	private static int shiftSum(Graph graph) {
+		int result = 0;
+		for (Node node : graph) {
+			for (Node successor : node.allSuccessors().keySet()) {
+				result += node.allSuccessors().get(successor);
+			}
+		}
+		return result;
+	}
 	
 	private class RetimingMove {
 		

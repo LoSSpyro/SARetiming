@@ -37,7 +37,7 @@ public class Main {
 		float calcTime = (float) (System.currentTimeMillis() - startTime) / 1000f;
 		System.out.println("Calculation time: " + calcTime + "s");
 		
-		//System.out.println(result.diagnose());
+		System.out.println(result.diagnose());
 	}
 	
 	public static void defaultMain(Graph g, String[] args) {
