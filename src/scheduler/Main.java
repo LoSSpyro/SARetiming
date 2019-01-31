@@ -23,10 +23,10 @@ public class Main {
 		System.out.printf("%s%n", g.diagnose());
 		
 		//defaultMain(g, args);
-		saRetiming(g);
+		saRetiming(g, args);
 	}
 	
-	public static void saRetiming(Graph graph) {
+	public static void saRetiming(Graph graph, String[] args) {
 		System.out.println("\n\nRunning SA Retiming\n");
 		
 		SARetiming sa = new SARetiming(graph);
@@ -34,10 +34,11 @@ public class Main {
 		
 		long startTime = System.currentTimeMillis();
 		Graph result = sa.run();
+		result.draw("modGraphs/result_", args[0]);
 		float calcTime = (float) (System.currentTimeMillis() - startTime) / 1000f;
 		System.out.println("Calculation time: " + calcTime + "s");
 		
-		//System.out.println(result.diagnose());
+		System.out.println(result.diagnose());
 	}
 	
 	public static void defaultMain(Graph g, String[] args) {
