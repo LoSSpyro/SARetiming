@@ -33,12 +33,12 @@ public class Main {
 		//sa.setSAParams(100, 0.1f, 10);
 		
 		long startTime = System.currentTimeMillis();
-		Graph result = sa.run();
+		Graph result = sa.run(false);	// knapp 50% langsamer mit Ausgaben
 		result.draw("modGraphs/result_", args[0]);
 		float calcTime = (float) (System.currentTimeMillis() - startTime) / 1000f;
 		System.out.println("Calculation time: " + calcTime + "s");
 		
-		System.out.println(result.diagnose());
+		//System.out.println(result.diagnose());
 	}
 	
 	public static void defaultMain(Graph g, String[] args) {
