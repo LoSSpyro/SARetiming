@@ -231,9 +231,9 @@ public class SARetiming {
 		Map<Node, Integer> visited = new HashMap<Node, Integer>();
 		for (Node node : graph) {
 			int lengthFromNode = longestPathFromNode(node, visited); 
-		if (lengthFromNode > result) {
-			result = lengthFromNode;
-		}
+			if (lengthFromNode > result) {
+				result = lengthFromNode;
+			}
 		}
 		return result;
 	}
@@ -243,7 +243,7 @@ public class SARetiming {
 		}
 		int result = 0;
 		for (Node successor : node.successors()) {
-			int lengthFromNode = longestPathFromNode(successor, visited); 
+			int lengthFromNode = longestPathFromNode(successor, visited);
 			if (lengthFromNode > result) {
 				result = lengthFromNode;
 			}
