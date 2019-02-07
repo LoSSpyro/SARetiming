@@ -20,7 +20,8 @@ public class Main {
 		}
 		
 		Graph g = dr.parse(args[0]);
-		System.out.printf("%s%n", g.diagnose());
+		//System.out.printf("%s%n", g.diagnose());
+		System.out.println("Number of nodes: " + g.size());
 		
 		//defaultMain(g, args);
 		saRetiming(g, args);

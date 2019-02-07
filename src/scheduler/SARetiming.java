@@ -11,7 +11,7 @@ import java.util.Random;
 public class SARetiming {
 	
 	public static final float DEFAULT_STOP_TEMP = .5f;
-	// maximum change for the index shift of a node with wither no predecessors or successors (so can be infinitely shifted)
+	// maximum change for the index shift of a node with either no predecessors or successors (so can be infinitely shifted)
 	public static final int LOOSE_NODE_SHIFT_MAX = 5;
 	
 	private final Graph initGraph; 
@@ -53,7 +53,6 @@ public class SARetiming {
 			System.out.println("\tDoing " + innerLoopIterations + " loops with temperature " + temp);
 			
 			for (int cntInner = 0; cntInner < innerLoopIterations; cntInner++) {
-				//System.out.println("\t\t" + cntInner);
 				Graph candidate = doRandomMove(print);
 				float newCost = getGraphCost(candidate, print);
 				if (newCost < minCost) {
@@ -107,7 +106,8 @@ public class SARetiming {
 	
 	private float findInitTemp(boolean print) {
 		graph = initGraph;
-		for (int tries = 0; tries < 5; tries++) {
+		int tries = 0;
+		while (true) {
 			int n = initGraph.size();
 			float[] costs = new float[n];
 			float average = 0f;
@@ -127,12 +127,18 @@ public class SARetiming {
 			initTemp = 20*standardDeviation;
 			
 			if (initTemp > 2) {
+				System.out.println("Initial temperature determined as " + initTemp);
 				break;
 			}
-			System.err.println("Calculated initital temperature of " + initTemp + ". Trying again...");
+			System.err.print("Calculated initital temperature of " + initTemp + ".");
+			if (tries++ < 5) {
+				initTemp = 5f;
+				System.err.println("Using default initial temperature " + initTemp);
+				break;
+			}
+			System.err.println("Trying again...");
 		}
 		
-		System.out.println("Initial temperature determined as " + initTemp);
 		return initTemp;
 	}
 	
@@ -212,7 +218,6 @@ public class SARetiming {
 	
 	
 	public static float getGraphCost(Graph graph, boolean print) {
-		// TODO
 		float achievedII = longestZeroWeightedPath(graph);
 		float shiftSum = shiftSum(graph);
 		float weightedShiftSum = (float) (1 - Math.exp(-shiftSum/1000f));
@@ -230,7 +235,7 @@ public class SARetiming {
 	
 	public static int longestZeroWeightedPath(Graph graph) {
 		int result = 0;
-		Map<Node, Integer> visited = new HashMap<Node, Integer>();
+		Map<Node, Integer> visited = new HashMap<Node, Integer>((int) (graph.size() * 1.5f));
 		for (Node node : graph) {
 			int lengthFromNode = longestPathFromNode(node, visited); 
 			if (lengthFromNode > result) {
