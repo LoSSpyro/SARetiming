@@ -2,9 +2,10 @@ package scheduler;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 public class SARetiming {
@@ -227,24 +228,27 @@ public class SARetiming {
 	
 	public static int longestZeroWeightedPath(Graph graph) {
 		int result = 0;
+		Map<Node, Integer> visited = new HashMap<Node, Integer>();
 		for (Node node : graph) {
-			int recursiveResult = longestPathFromNode(node);
-			if (recursiveResult > result) {
-				result = recursiveResult;
-			}
+			int lengthFromNode = longestPathFromNode(node, visited); 
+		if (lengthFromNode > result) {
+			result = lengthFromNode;
+		}
 		}
 		return result;
 	}
-	private static int longestPathFromNode(Node node) {
-		//System.out.println("\t\t\t\tLPFN: Node " + node.id + " - entry");
+	private static int longestPathFromNode(Node node, Map<Node, Integer> visited) {
+		if (visited.containsKey(node)) {
+			return visited.get(node);
+		}
 		int result = 0;
 		for (Node successor : node.successors()) {
-			int recursiveResult = longestPathFromNode(successor);
-			if (recursiveResult > result) {
-				result = recursiveResult;
+			int lengthFromNode = longestPathFromNode(successor, visited); 
+			if (lengthFromNode > result) {
+				result = lengthFromNode;
 			}
 		}
-		//System.out.println("\t\t\t\tLPFN: Path to node " + node + " has length " + (result + node.getDelay()));
+		visited.put(node, result);
 		return result + node.getDelay();
 	}
 	
@@ -268,7 +272,6 @@ public class SARetiming {
 	}
 	
 	public void evaluate(String filename, float calcTime) {
-		
 		try {
 			int initGraphII, bestGraphII, finalGraphII;
 			
