@@ -83,7 +83,9 @@ public class SARetiming {
 		System.out.println("\n\nFinished with temperature " + temp + " < " + stopTemp);
 		System.out.println("Initial temperature was " + initTemp);
 		System.out.println("Initial cost was " + initCost);
-		System.out.println("MinII is " + minII.getMinII(graph, false));
+		if (graph.size() < 200) {
+			System.out.println("MinII is " + minII.getMinII(graph, false));
+		}
 		System.out.println("Minimal found cost is " + minCost);
 		System.out.println("Final SA cost is " + oldCost);
 		if (Math.floor(minCost) < Math.floor(oldCost)) {

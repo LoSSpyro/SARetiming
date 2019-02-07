@@ -51,7 +51,7 @@ public class Dot_reader {
 					if (m.group(1).compareTo("node") != 0){
 						Node n = new Node(m.group(1));
 						graph.add(n);
-						System.out.println("GROUP:\n" + m.group(2));
+						//System.out.println("GROUP:\n" + m.group(2));
 						graph.get(n).setRT(RT.getRT(m.group(2)));
 					}
 				}
