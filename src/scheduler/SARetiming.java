@@ -1,5 +1,8 @@
 package scheduler;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,6 +20,9 @@ public class SARetiming {
 	private float temp;
 	private int innerLoopIterations;
 	private boolean foundLooseNodes;
+	
+	private Graph bestGraph;
+	private Graph finalGraph;
 	
 	public SARetiming(Graph graph) {
 		initGraph = graph;
@@ -91,7 +97,9 @@ public class SARetiming {
 		}
 		System.out.println("\n\n\n");
 		
-		return bestGraph;
+		finalGraph = graph;
+		this.bestGraph = bestGraph;
+		return graph;
 	}
 	
 	private float findInitTemp(boolean print) {
@@ -257,6 +265,31 @@ public class SARetiming {
 			}
 		}
 		return result;
+	}
+	
+	public void evaluate(String filename, float calcTime) {
+		
+		try {
+			int initGraphII, bestGraphII, finalGraphII;
+			
+			initGraphII = longestZeroWeightedPath(initGraph);
+			bestGraphII = longestZeroWeightedPath(bestGraph);
+			finalGraphII = longestZeroWeightedPath(finalGraph);
+			
+			String[] arguments = filename.split("/");
+			String file = arguments[arguments.length-1];
+			
+			BufferedWriter result_file = new BufferedWriter(new FileWriter("results/values.txt", true));
+			result_file.write(file + "\t" + initGraphII + "\t" + bestGraphII + "\t" + finalGraphII + "\t" + calcTime);
+			
+			result_file.write("\n");
+			result_file.flush();
+			result_file.close();
+			
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	private class RetimingMove {

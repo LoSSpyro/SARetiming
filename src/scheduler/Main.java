@@ -37,6 +37,7 @@ public class Main {
 		result.draw("modGraphs/result_", args[0]);
 		float calcTime = (float) (System.currentTimeMillis() - startTime) / 1000f;
 		System.out.println("Calculation time: " + calcTime + "s");
+		sa.evaluate(args[0], calcTime);
 		
 		//System.out.println(result.diagnose());
 	}
