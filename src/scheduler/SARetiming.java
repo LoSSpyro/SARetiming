@@ -14,6 +14,8 @@ public class SARetiming {
 	// maximum change for the index shift of a node with either no predecessors or successors (so can be infinitely shifted)
 	public static final int LOOSE_NODE_SHIFT_MAX = 5;
 	
+	private static int lastLongestPath, lastShiftSum, lastShiftMax;
+	
 	private final Graph initGraph; 
 	private Graph graph;
 	private float initTemp;
@@ -43,10 +45,11 @@ public class SARetiming {
 		float oldCost = getGraphCost(graph, print);
 		temp = initTemp;
 		foundLooseNodes = false;
-		float initCost = oldCost;
 		float minCost = oldCost;
 		Graph bestGraph = initGraph;
-		System.out.println("Initial cost is " + initCost);
+		int worstII = 0, worstSum = 0, worstMax = 0;
+		float worstCost = 0f;
+		System.out.println("Initial Achieved II = " + longestZeroWeightedPath(initGraph) + ". Initial shift sum = " + shiftSum(initGraph));
 		
 		while (temp > stopTemp) {
 			int acceptedChanges = 0;
@@ -55,13 +58,25 @@ public class SARetiming {
 			for (int cntInner = 0; cntInner < innerLoopIterations; cntInner++) {
 				Graph candidate = doRandomMove(print);
 				float newCost = getGraphCost(candidate, print);
-				if (newCost < minCost) {
-					minCost = newCost;
-					bestGraph = candidate;
-				}
 				float deltaCost = newCost - oldCost; // < 0: improvement
 				float r = (float) Math.random();
 				if (r < Math.exp(-1000*deltaCost / temp)) {
+					if (newCost < minCost) {
+						minCost = newCost;
+						bestGraph = candidate;
+					}
+					if (lastLongestPath > worstII) {
+						worstII = lastLongestPath;
+					}
+					if (lastShiftSum > worstSum) {
+						worstSum = lastShiftSum;
+					}
+					if (shiftMax(candidate) > worstMax) {
+						worstMax = lastShiftMax;
+					}
+					if (newCost > worstCost) {
+						worstCost = newCost;
+					}
 					// accept candidate
 					graph = candidate;
 					oldCost = newCost;
@@ -77,30 +92,33 @@ public class SARetiming {
 			}
 			float alpha = (float) acceptedChanges / (float) innerLoopIterations;
 			updateTemp(alpha, print);
-			System.out.println("\tCurrent cost = " + oldCost);
+			System.out.println("\tCurrent Achieved II = " + longestZeroWeightedPath(graph) + ". ShiftSum = " + shiftSum(graph));
 		}
-		System.out.println("\n\nFinished with temperature " + temp + " < " + stopTemp);
-		System.out.println("Initial temperature was " + initTemp);
-		System.out.println("Initial cost was " + initCost);
+		
+		finalGraph = graph;
+		this.bestGraph = bestGraph;
+		
+		System.out.println("\n\nFinished with temperature:\t" + temp + " < " + stopTemp);
+		System.out.println("Initial temperature:\t\t" + initTemp);
+		
+		System.out.println("\n\n\tAchvdII\tShftSum\tShftMax\tCost");
+		System.out.println("Initial\t" + longestZeroWeightedPath(initGraph) + "\t" + shiftSum(initGraph) + "\t" + shiftMax(initGraph) + "\t" + getGraphCost(initGraph, false));
+		System.out.println("Worst\t" + worstII + "\t" + worstSum + "\t" + worstMax + "\t" + worstCost);
+		System.out.println("Final\t" + longestZeroWeightedPath(finalGraph) + "\t" + shiftSum(finalGraph) + "\t" + shiftMax(finalGraph) + "\t" + getGraphCost(finalGraph, false));
+		System.out.println("Best\t" + longestZeroWeightedPath(bestGraph) + "\t" + shiftSum(bestGraph) + "\t" + shiftMax(bestGraph) + "\t" + getGraphCost(bestGraph, false));
+		System.out.println("\nWorst values do not necessarily come from the same graph.\n");
+		
 		if (graph.size() < 200) {
-			System.out.println("MinII is " + minII.getMinII(graph, false));
+			System.out.println("MinII:\t" + minII.getMinII(graph, false));
 		}
-		System.out.println("Minimal found cost is " + minCost);
-		System.out.println("Final SA cost is " + oldCost);
 		if (Math.floor(minCost) < Math.floor(oldCost)) {
 			System.err.println("Caution: the best found solution wasn't delivered by SA!");
 		}
-		System.out.println("Shift sum for best solution: " + shiftSum(bestGraph));
-		System.out.println("Shift sum for SA solution: " + shiftSum(graph));
-		System.out.println("Shift max for best solution: " + shiftMax(bestGraph));
-		System.out.println("Shift max for SA solution: " + shiftMax(graph));
 		if (foundLooseNodes) {
 			System.err.println("Warning: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
 		}
 		System.out.println("\n\n\n");
 		
-		finalGraph = graph;
-		this.bestGraph = bestGraph;
 		return graph;
 	}
 	
@@ -242,6 +260,7 @@ public class SARetiming {
 				result = lengthFromNode;
 			}
 		}
+		lastLongestPath = result;
 		return result;
 	}
 	private static int longestPathFromNode(Node node, Map<Node, Integer> visited) {
@@ -266,6 +285,7 @@ public class SARetiming {
 				result += node.allSuccessors().get(successor);
 			}
 		}
+		lastShiftSum = result;
 		return result;
 	}
 	public static int shiftMax(Graph graph) {
@@ -275,6 +295,7 @@ public class SARetiming {
 				result = Math.max(result, node.allSuccessors().get(successor));
 			}
 		}
+		lastShiftMax = result;
 		return result;
 	}
 	
