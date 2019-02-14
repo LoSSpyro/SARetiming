@@ -92,7 +92,7 @@ public class SARetiming {
 			}
 			float alpha = (float) acceptedChanges / (float) innerLoopIterations;
 			updateTemp(alpha, print);
-			System.out.println("\tCurrent Achieved II = " + longestZeroWeightedPath(graph) + ". ShiftSum = " + shiftSum(graph));
+			System.out.println("\t\tCurrent Achieved II = " + longestZeroWeightedPath(graph) + ". ShiftSum = " + shiftSum(graph));
 		}
 		
 		finalGraph = graph;
@@ -170,7 +170,7 @@ public class SARetiming {
 			y = 0.95f;
 		}
 		
-		System.out.println("\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
+		System.out.println("\t\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
 		temp *= y;
 	}
 	
@@ -200,19 +200,14 @@ public class SARetiming {
 		List<RetimingMove> result = new ArrayList<RetimingMove>();
 		
 		for (Node node : graph) {
-			//System.out.println(node.diagnose());
 			int minIn = Integer.MAX_VALUE;
 			for (Integer weight : node.allPredecessors().values()) {
-				//System.out.println("\t\t\tpred weight: " + weight);
 				minIn = Math.min(minIn, weight);
 			}
-			//System.out.println("\t\t\tminIn = " + minIn);
 			int minOut = Integer.MAX_VALUE;
 			for (Integer weight : node.allSuccessors().values()) {
-				//System.out.println("\t\t\tsucc weight: " + weight);
 				minOut = Math.min(minOut, weight);
 			}
-			//System.out.println("\t\t\tminOut = " + minOut);
 
 			if (minIn == Integer.MAX_VALUE) {
 				foundLooseNodes = true;
