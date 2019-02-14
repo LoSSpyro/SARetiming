@@ -12,7 +12,7 @@ public class SARetiming {
 	
 	public static final float DEFAULT_STOP_TEMP = .5f;
 	// maximum change for the index shift of a node with either no predecessors or successors (so can be infinitely shifted)
-	public static final int LOOSE_NODE_SHIFT_MAX = 5;
+	public static final int LOOSE_NODE_SHIFT_MAX = 1;
 	
 	private static int lastLongestPath, lastShiftSum, lastShiftMax;
 	
@@ -201,28 +201,34 @@ public class SARetiming {
 		
 		for (Node node : graph) {
 			int minIn = Integer.MAX_VALUE;
+			int maxIn = Integer.MIN_VALUE;
 			for (Integer weight : node.allPredecessors().values()) {
 				minIn = Math.min(minIn, weight);
+				maxIn = Math.max(maxIn, weight);
 			}
 			int minOut = Integer.MAX_VALUE;
+			int maxOut = Integer.MIN_VALUE;
 			for (Integer weight : node.allSuccessors().values()) {
 				minOut = Math.min(minOut, weight);
+				maxOut = Math.max(maxOut, weight);
 			}
 
 			if (minIn == Integer.MAX_VALUE) {
 				foundLooseNodes = true;
 				minIn = -LOOSE_NODE_SHIFT_MAX;
+				maxIn = LOOSE_NODE_SHIFT_MAX;
 			}
 			if (minOut == Integer.MAX_VALUE) {
 				foundLooseNodes = true;
-				minOut = LOOSE_NODE_SHIFT_MAX;
+				minOut = 1;
+				maxOut = 1;
 			}
 			
-			for (int iterShift = -minIn; iterShift <= minOut; iterShift++) {
-				if (iterShift == 0) {
-					continue;
-				}
-				result.add(new RetimingMove(node, new Integer(iterShift)));
+			if (minIn == 1 && maxOut == 0) {
+				result.add(new RetimingMove(node, -1));
+			}
+			if (maxIn == 0 && minOut == 1) {
+				result.add(new RetimingMove(node, 1));
 			}
 		}
 		
