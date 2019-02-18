@@ -1,5 +1,7 @@
 package scheduler;
 
+import scheduler.SARetiming.SARetimingResultPackage;
+
 public class Main {
 
 	public static void main(String[] args) {
@@ -34,12 +36,10 @@ public class Main {
 		sa.setAllowShiftsGr1(true);
 		//sa.setSAParams(100, 0.1f, 10);
 		
-		long startTime = System.currentTimeMillis();
-		Graph result = sa.run(false);	// knapp 50% langsamer mit Ausgaben
-		result.draw("modGraphs/result_", args[0]);
-		float calcTime = (float) (System.currentTimeMillis() - startTime) / 1000f;
-		System.out.println("Calculation time: " + calcTime + "s");
-		sa.evaluate(args[0], calcTime);
+		SARetimingResultPackage resultPackage = sa.run(false);	// knapp 50% langsamer mit Ausgaben
+		resultPackage.printDiagnose();
+		resultPackage.graph.draw("modGraphs/result_", args[0]);
+		sa.evaluate(args[0], resultPackage.wallclock);
 		
 		//System.out.println(result.diagnose());
 	}

@@ -41,7 +41,7 @@ public class SARetiming {
 		this.allowShiftsGr1 = allowShiftsGr1;
 	}
 	
-	public Graph run(boolean print) {
+	public SARetimingResultPackage run(boolean print) {
 		graph = initGraph;
 		float oldCost = getGraphCost(graph, print);
 		temp = initTemp;
@@ -52,6 +52,7 @@ public class SARetiming {
 		float worstCost = 0f;
 		System.out.println("Initial Achieved II = " + longestZeroWeightedPath(initGraph) + ". Initial shift sum = " + shiftSum(initGraph));
 		
+		long startTime = System.currentTimeMillis();
 		while (temp > stopTemp) {
 			int acceptedChanges = 0;
 			System.out.println("\tDoing " + innerLoopIterations + " loops with temperature " + temp);
@@ -95,32 +96,20 @@ public class SARetiming {
 			updateTemp(alpha, print);
 			System.out.println("\t\tCurrent Achieved II = " + longestZeroWeightedPath(graph) + ". ShiftSum = " + shiftSum(graph));
 		}
+		long wallclock = System.currentTimeMillis() - startTime;
 		
 		finalGraph = graph;
 		this.bestGraph = bestGraph;
 		
 		System.out.println("\n\nFinished with temperature:\t" + temp + " < " + stopTemp);
-		System.out.println("Initial temperature:\t\t" + initTemp);
+		System.out.println("Initial temperature:\t\t" + initTemp + "\n");
 		
-		System.out.println("\n\n\tAchvdII\tShftSum\tShftMax\tCost");
-		System.out.println("Initial\t" + longestZeroWeightedPath(initGraph) + "\t" + shiftSum(initGraph) + "\t" + shiftMax(initGraph) + "\t" + getGraphCost(initGraph, false));
-		System.out.println("Worst\t" + worstII + "\t" + worstSum + "\t" + worstMax + "\t" + worstCost);
-		System.out.println("SAFinal\t" + longestZeroWeightedPath(finalGraph) + "\t" + shiftSum(finalGraph) + "\t" + shiftMax(finalGraph) + "\t" + getGraphCost(finalGraph, false));
-		System.out.println("Best\t" + longestZeroWeightedPath(bestGraph) + "\t" + shiftSum(bestGraph) + "\t" + shiftMax(bestGraph) + "\t" + getGraphCost(bestGraph, false));
-		System.out.println("\nWorst values do not necessarily come from the same graph.\n");
 		
-		if (graph.size() < 200) {
-			System.out.println("MinII:\t" + minII.getMinII(graph, false));
-		}
-		if (Math.floor(minCost) < Math.floor(oldCost)) {
-			System.err.println("Caution: the best found solution wasn't delivered by SA!");
-		}
-		if (foundLooseNodes) {
-			System.err.println("Warning: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
-		}
-		System.out.println("\n\n\n");
-		
-		return graph;
+		return new SARetimingResultPackage(bestGraph, wallclock, foundLooseNodes,
+				longestZeroWeightedPath(initGraph), worstII, longestZeroWeightedPath(finalGraph), longestZeroWeightedPath(bestGraph),
+				shiftSum(initGraph), worstSum, shiftSum(finalGraph), shiftSum(bestGraph),
+				shiftMax(initGraph), worstMax, shiftMax(finalGraph), shiftMax(bestGraph),
+				getGraphCost(initGraph), worstCost, getGraphCost(finalGraph), getGraphCost(bestGraph));
 	}
 	
 	private float findInitTemp(boolean print) {
@@ -173,13 +162,6 @@ public class SARetiming {
 		
 		System.out.println("\t\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
 		temp *= y;
-	}
-	
-	public void setSAParams(float initTemp, float stopTemp, int innerNum, boolean allowShiftsGr1) {
-		this.initTemp = initTemp;
-		this.stopTemp = stopTemp;
-		innerLoopIterations = (int) Math.round(innerNum * Math.pow(initGraph.size(), 4./3.));
-		this.allowShiftsGr1 = allowShiftsGr1; 
 	}
 	
 	
@@ -267,6 +249,9 @@ public class SARetiming {
 	}
 	
 	
+	public static float getGraphCost(Graph graph) {
+		return getGraphCost(graph, false);
+	}
 	public static float getGraphCost(Graph graph, boolean print) {
 		float achievedII = longestZeroWeightedPath(graph);
 		float shiftSum = shiftSum(graph);
@@ -427,6 +412,67 @@ public class SARetiming {
 		
 		public String toString() {
 			return "RetimingMove: Node " + node.id + ", shift " + iterationShift;
+		}
+		
+	}
+	
+	public class SARetimingResultPackage {
+		
+		public final Graph graph;
+		public long wallclock;
+		public final boolean foundLooseNodes;
+		
+		public final int initII, worstII, saII, bestII;
+		public final int initShiftSum, worstShiftSum, saShiftSum, bestShiftSum;
+		public final int initShiftMax, worstShiftMax, saShiftMax, bestShiftMax;
+		public final float initCost, worstCost, saCost, bestCost;
+		
+		public SARetimingResultPackage (Graph bestGraph, long wallclock, boolean foundLooseNodes,
+				int initII, int worstII, int saII, int bestII,
+				int initShiftSum, int worstShiftSum, int saShiftSum, int bestShiftSum,
+				int initShiftMax, int worstShiftMax, int saShiftMax, int bestShiftMax,
+				float initCost, float worstCost, float saCost, float bestCost) {
+			this.graph = bestGraph;
+			this.wallclock = wallclock;
+			this.foundLooseNodes = foundLooseNodes;
+			
+			this.initII = initII;
+			this.worstII = worstII;
+			this.saII = saII;
+			this.bestII = bestII;
+			this.initShiftSum = initShiftSum;
+			this.worstShiftSum = worstShiftSum;
+			this.saShiftSum = saShiftSum;
+			this.bestShiftSum = bestShiftSum;
+			this.initShiftMax = initShiftMax;
+			this.worstShiftMax = worstShiftMax;
+			this.saShiftMax = saShiftMax;
+			this.bestShiftMax = bestShiftMax;
+			this.initCost = initCost;
+			this.worstCost = worstCost;
+			this.saCost = saCost;
+			this.bestCost = bestCost;
+		}
+		
+		public void printDiagnose() {
+			System.out.println("\n\tAchvdII\tShftSum\tShftMax\tCost");
+			System.out.println("Initial\t" + initII + "\t" + initShiftSum + "\t" + initShiftMax + "\t" + initCost);
+			System.out.println("Worst\t" + worstII + "\t" + worstShiftSum + "\t" + worstShiftMax + "\t" + worstCost);
+			System.out.println("SAFinal\t" + saII + "\t" + saShiftSum + "\t" + saShiftMax + "\t" + saCost);
+			System.out.println("Best\t" + bestII + "\t" + bestShiftSum + "\t" + bestShiftMax + "\t" + bestCost);
+			System.out.println("\nWorst values do not necessarily come from the same graph.\n");
+			
+			if (graph.size() < 200) {
+				System.out.println("MinII:\t" + minII.getMinII(graph, false));
+			}
+			if (bestII < saII) {
+				System.err.println("Caution: the best found solution wasn't delivered by SA!");
+			}
+			if (foundLooseNodes) {
+				System.err.println("Warning: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
+			}
+			System.out.println("\nCalculation time: " + ((float) wallclock / 1000f) + "s");
+			System.out.println("\n\n\n");
 		}
 		
 	}
