@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 
 import scheduler.SARetiming.SARetimingResultPackage;
@@ -62,8 +63,10 @@ public class Sweep {
 		}
 		System.out.println("\n\n\n");
 		
+		long startTime = System.currentTimeMillis();
+		
 		try {
-			String dateTime = new SimpleDateFormat("yyyy-dd-mm_HH.mm.ss").format(Calendar.getInstance().getTime());
+			String dateTime = new SimpleDateFormat("yyyy-mm-dd_HH.mm.ss").format(Calendar.getInstance().getTime());
 			BufferedWriter writer = new BufferedWriter(new FileWriter("results/SweepResults_" + dateTime + ".csv"));
 			
 			writer.write("Graph,Size,Loose nodes,Allow shifts >1,Run,Runtime,"
@@ -85,7 +88,8 @@ public class Sweep {
 					SARetimingResultPackage res;
 					
 					sa.setAllowShiftsGr1(true);
-					System.out.println("Running graph " + ++graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = true");
+					System.out.print(new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
+					System.out.println(" - Running graph " + ++graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = true");
 					try {
 						res = sa.run(0);
 						writer.write(compileSweepResultsLine(graphFile, run, res, true));
@@ -95,7 +99,8 @@ public class Sweep {
 					}
 					
 					sa.setAllowShiftsGr1(false);
-					System.out.println("Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = false");
+					System.out.print(new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
+					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = false");
 					try {
 						res = sa.run(0);
 						writer.write(compileSweepResultsLine(graphFile, run, res, false));
@@ -114,12 +119,16 @@ public class Sweep {
 				skippedGraphs.append("None :-)");
 			}
 			writer.write(skippedGraphs.toString());
-			
+			String time = new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() - startTime - 3600000));
+			writer.write("\n\nSweep duration: " + time);
 			writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 			return;
 		}
+		
+		String time = new SimpleDateFormat("HH:mm:ss").format(new Date(System.currentTimeMillis() - startTime - 3600000));
+		System.out.println("\n\n\nSweep complete.\nIt took " + time + " hours");
 	}
 	
 	private static String compileSweepResultsLine(String graphFile, int run, SARetimingResultPackage res, boolean allowShiftsGr1) {
