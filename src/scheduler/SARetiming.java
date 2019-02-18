@@ -16,20 +16,17 @@ public class SARetiming {
 	
 	private static int lastLongestPath, lastShiftSum, lastShiftMax;
 	
-	private final Graph initGraph; 
-	private Graph graph;
+	private final Graph initGraph;
+	private Graph bestGraph;
+	private Graph saGraph;
 	private float initTemp;
 	private float stopTemp;
 	private boolean allowShiftsGr1;
 	private int innerLoopIterations;
 	private boolean foundLooseNodes;
 	
-	private Graph bestGraph;
-	private Graph finalGraph;
-	
 	public SARetiming(Graph graph) {
 		initGraph = graph;
-		this.graph = graph;
 		stopTemp = DEFAULT_STOP_TEMP;
 		innerLoopIterations = (int) Math.round(10 * Math.pow(initGraph.size(), 4./3.));
 		allowShiftsGr1 = true;
@@ -41,7 +38,7 @@ public class SARetiming {
 	
 	public SARetimingResultPackage run(int print) {
 		foundLooseNodes = false;
-		float oldCost = getGraphCost(graph, print);
+		float oldCost = getGraphCost(initGraph, print);
 		float minCost = oldCost;
 		Graph bestGraph = initGraph;
 		float worstCost = oldCost;
@@ -52,7 +49,7 @@ public class SARetiming {
 		
 		long startTime = System.currentTimeMillis();
 		findInitTemp(print);
-		graph = initGraph;
+		Graph graph = initGraph;
 		float temp = initTemp;
 		
 		while (temp > stopTemp) {
@@ -62,7 +59,7 @@ public class SARetiming {
 			}
 			
 			for (int cntInner = 0; cntInner < innerLoopIterations; cntInner++) {
-				Graph candidate = doRandomMove(print);
+				Graph candidate = doRandomMove(graph, print);
 				float newCost = getGraphCost(candidate, print);
 				float deltaCost = newCost - oldCost; // < 0: improvement
 				double r = Math.random();
@@ -104,8 +101,8 @@ public class SARetiming {
 		}
 		long wallclock = System.currentTimeMillis() - startTime;
 		
-		finalGraph = graph;
 		this.bestGraph = bestGraph;
+		this.saGraph = graph;
 		
 		if (print >= 1) {
 			System.out.println("\n\nFinished with temperature:\t" + temp + " < " + stopTemp);
@@ -114,15 +111,15 @@ public class SARetiming {
 		
 		
 		return new SARetimingResultPackage(bestGraph, wallclock, foundLooseNodes,
-				longestZeroWeightedPath(initGraph), worstII, longestZeroWeightedPath(finalGraph), longestZeroWeightedPath(bestGraph),
-				shiftSum(initGraph), worstSum, shiftSum(finalGraph), shiftSum(bestGraph),
-				shiftMax(initGraph), worstMax, shiftMax(finalGraph), shiftMax(bestGraph),
-				getGraphCost(initGraph), worstCost, getGraphCost(finalGraph), getGraphCost(bestGraph));
+				longestZeroWeightedPath(initGraph), worstII, longestZeroWeightedPath(graph), longestZeroWeightedPath(bestGraph),
+				shiftSum(initGraph), worstSum, shiftSum(graph), shiftSum(bestGraph),
+				shiftMax(initGraph), worstMax, shiftMax(graph), shiftMax(bestGraph),
+				getGraphCost(initGraph), worstCost, getGraphCost(graph), getGraphCost(bestGraph));
 	}
 	
 	private void findInitTemp(int print) {
 		float initTemp;
-		graph = initGraph;
+		Graph graph = initGraph;
 		
 		int tries = 0;
 		while (true) {
@@ -130,7 +127,7 @@ public class SARetiming {
 			float[] costs = new float[n];
 			float average = 0f;
 			for (int i = 0; i < n; i++) {
-				graph = doRandomMove(print);
+				graph = doRandomMove(graph, print);
 				float cost = getGraphCost(graph, print);
 				costs[i] = cost;
 				average += cost;
@@ -185,7 +182,7 @@ public class SARetiming {
 	}
 	
 	
-	private Graph doRandomMove(int print) {
+	private Graph doRandomMove(Graph graph, int print) {
 		Graph result = graph.clone();
 		
 		List<RetimingMove> possibleMoves = getPossibleMoves(result);
@@ -338,17 +335,17 @@ public class SARetiming {
 	
 	public void evaluate(String filename, float calcTime) {
 		try {
-			int initGraphII, bestGraphII, finalGraphII;
+			int initGraphII, bestGraphII, saGraphII;
 			
 			initGraphII = longestZeroWeightedPath(initGraph);
 			bestGraphII = longestZeroWeightedPath(bestGraph);
-			finalGraphII = longestZeroWeightedPath(finalGraph);
+			saGraphII = longestZeroWeightedPath(saGraph);
 			
 			String[] arguments = filename.split("/");
 			String file = arguments[arguments.length-1];
 			
 			BufferedWriter result_file = new BufferedWriter(new FileWriter("results/values.txt", true));
-			result_file.write(file + "\t" + initGraphII + "\t" + bestGraphII + "\t" + finalGraphII + "\t" + calcTime);
+			result_file.write(file + "\t" + initGraphII + "\t" + bestGraphII + "\t" + saGraphII + "\t" + calcTime);
 			
 			result_file.write("\n");
 			result_file.flush();
