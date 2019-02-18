@@ -26,7 +26,12 @@ public class Main {
 		System.out.println("Number of nodes: " + g.size());
 		
 		//defaultMain(g, args);
-		saRetiming(g, args);
+		//saRetiming(g, args);
+		sweep(g);
+	}
+	
+	public static void sweep(Graph graph) {
+		Sweep.multipleRuns(graph, 2, true);
 	}
 	
 	public static void saRetiming(Graph graph, String[] args) {
@@ -36,7 +41,7 @@ public class Main {
 		sa.setAllowShiftsGr1(true);
 		//sa.setSAParams(100, 0.1f, 10);
 		
-		SARetimingResultPackage resultPackage = sa.run(false);	// knapp 50% langsamer mit Ausgaben
+		SARetimingResultPackage resultPackage = sa.run(1);	// knapp 50% langsamer mit Ausgaben
 		resultPackage.printDiagnose();
 		resultPackage.graph.draw("modGraphs/result_", args[0]);
 		sa.evaluate(args[0], resultPackage.wallclock);

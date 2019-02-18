@@ -20,7 +20,6 @@ public class SARetiming {
 	private Graph graph;
 	private float initTemp;
 	private float stopTemp;
-	private float temp;
 	private boolean allowShiftsGr1;
 	private int innerLoopIterations;
 	private boolean foundLooseNodes;
@@ -31,7 +30,6 @@ public class SARetiming {
 	public SARetiming(Graph graph) {
 		initGraph = graph;
 		this.graph = graph;
-		initTemp = findInitTemp(false);
 		stopTemp = DEFAULT_STOP_TEMP;
 		innerLoopIterations = (int) Math.round(10 * Math.pow(initGraph.size(), 4./3.));
 		allowShiftsGr1 = true;
@@ -41,28 +39,43 @@ public class SARetiming {
 		this.allowShiftsGr1 = allowShiftsGr1;
 	}
 	
-	public SARetimingResultPackage run(boolean print) {
-		graph = initGraph;
-		float oldCost = getGraphCost(graph, print);
-		temp = initTemp;
+	public SARetimingResultPackage run(int print) {
 		foundLooseNodes = false;
+		float oldCost = getGraphCost(graph, print);
 		float minCost = oldCost;
 		Graph bestGraph = initGraph;
-		int worstII = 0, worstSum = 0, worstMax = 0;
-		float worstCost = 0f;
-		System.out.println("Initial Achieved II = " + longestZeroWeightedPath(initGraph) + ". Initial shift sum = " + shiftSum(initGraph));
+		float worstCost = oldCost;
+		int worstII = longestZeroWeightedPath(initGraph), worstSum = shiftSum(initGraph), worstMax = shiftMax(initGraph);
+		if (print >= 1) {
+			System.out.println("Initial Achieved II = " + longestZeroWeightedPath(initGraph) + ". Initial shift sum = " + shiftSum(initGraph));
+		}
 		
 		long startTime = System.currentTimeMillis();
+		findInitTemp(print);
+		graph = initGraph;
+		float temp = initTemp;
+		
 		while (temp > stopTemp) {
 			int acceptedChanges = 0;
-			System.out.println("\tDoing " + innerLoopIterations + " loops with temperature " + temp);
+			if (print >= 1) {
+				System.out.println("\tDoing " + innerLoopIterations + " loops with temperature " + temp);
+			}
 			
 			for (int cntInner = 0; cntInner < innerLoopIterations; cntInner++) {
 				Graph candidate = doRandomMove(print);
 				float newCost = getGraphCost(candidate, print);
 				float deltaCost = newCost - oldCost; // < 0: improvement
-				float r = (float) Math.random();
-				if (r < Math.exp(-1000*deltaCost / temp)) {
+				double r = Math.random();
+				double acceptProb = Math.exp(-1000*deltaCost / temp);
+				if (r < acceptProb) {
+					// accept candidate
+					graph = candidate;
+					oldCost = newCost;
+					acceptedChanges++;
+					if (print >= 2) {
+						System.out.println("\t\t\tAccepted move with probability " + (Math.round(100*acceptProb)) + "% (deltaC = " + deltaCost + ")");
+					}
+					
 					if (newCost < minCost) {
 						minCost = newCost;
 						bestGraph = candidate;
@@ -79,30 +92,25 @@ public class SARetiming {
 					if (newCost > worstCost) {
 						worstCost = newCost;
 					}
-					// accept candidate
-					graph = candidate;
-					oldCost = newCost;
-					acceptedChanges++;
-					if (print) {
-						System.out.println("\t\t\tAccepted move with probability " + (Math.round(100*Math.exp(-deltaCost / temp))) + "% (deltaC = " + deltaCost + ")");
-					}
-				} else {
-					if (print) {
-						System.out.println("\t\t\tRejected move");
-					}
+				} else if (print >= 2) {
+					System.out.println("\t\t\tRejected move. r = " + r + " !< accProb = " + acceptProb);
 				}
 			}
 			float alpha = (float) acceptedChanges / (float) innerLoopIterations;
-			updateTemp(alpha, print);
-			System.out.println("\t\tCurrent Achieved II = " + longestZeroWeightedPath(graph) + ". ShiftSum = " + shiftSum(graph));
+			temp = updateTemp(temp, alpha, print);
+			if (print >= 1) {
+				System.out.println("\t\tCurrent Achieved II = " + longestZeroWeightedPath(graph) + ". ShiftSum = " + shiftSum(graph));
+			}
 		}
 		long wallclock = System.currentTimeMillis() - startTime;
 		
 		finalGraph = graph;
 		this.bestGraph = bestGraph;
 		
-		System.out.println("\n\nFinished with temperature:\t" + temp + " < " + stopTemp);
-		System.out.println("Initial temperature:\t\t" + initTemp + "\n");
+		if (print >= 1) {
+			System.out.println("\n\nFinished with temperature:\t" + temp + " < " + stopTemp);
+			System.out.println("Initial temperature:\t\t" + initTemp + "\n");
+		}
 		
 		
 		return new SARetimingResultPackage(bestGraph, wallclock, foundLooseNodes,
@@ -112,8 +120,10 @@ public class SARetiming {
 				getGraphCost(initGraph), worstCost, getGraphCost(finalGraph), getGraphCost(bestGraph));
 	}
 	
-	private float findInitTemp(boolean print) {
+	private void findInitTemp(int print) {
+		float initTemp;
 		graph = initGraph;
+		
 		int tries = 0;
 		while (true) {
 			int n = initGraph.size();
@@ -135,22 +145,30 @@ public class SARetiming {
 			initTemp = 20*standardDeviation;
 			
 			if (initTemp > 2) {
-				System.out.println("Initial temperature determined as " + initTemp);
+				if (print >= 1) {
+					System.out.println("Initial temperature determined as " + initTemp);
+				}
 				break;
 			}
-			System.err.print("Calculated initital temperature of " + initTemp + ".");
+			if (print >= 1) {
+				System.err.print("Calculated initital temperature of " + initTemp + ".");
+			}
 			if (tries++ < 5) {
 				initTemp = 5f;
-				System.err.println("Using default initial temperature " + initTemp);
+				if (print >= 1) {
+					System.err.println("Using default initial temperature " + initTemp);
+				}
 				break;
 			}
-			System.err.println("Trying again...");
+			if (print >= 1) {
+				System.err.println("Trying again...");
+			}
 		}
 		
-		return initTemp;
+		this.initTemp = initTemp;
 	}
 	
-	private void updateTemp(float alpha, boolean print) {
+	private float updateTemp(float temp, float alpha, int print) {
 		float y = 0.8f;
 		if (alpha > 0.96f) {
 			y = 0.5f;
@@ -160,19 +178,21 @@ public class SARetiming {
 			y = 0.95f;
 		}
 		
-		System.out.println("\t\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
-		temp *= y;
+		if (print >= 1) {
+			System.out.println("\t\tChange acceptance rate alpha is " + alpha + ". T *= " + y);
+		}
+		return temp * y;
 	}
 	
 	
-	private Graph doRandomMove(boolean print) {
+	private Graph doRandomMove(int print) {
 		Graph result = graph.clone();
 		
 		List<RetimingMove> possibleMoves = getPossibleMoves(result);
 		int moveIndex = new Random().nextInt(possibleMoves.size());
 		RetimingMove move = possibleMoves.get(moveIndex);
 		
-		if (print) {
+		if (print >= 2) {
 			System.out.println("\t\tExecuting random " + move);
 		}
 		boolean success = move.execute();
@@ -250,9 +270,9 @@ public class SARetiming {
 	
 	
 	public static float getGraphCost(Graph graph) {
-		return getGraphCost(graph, false);
+		return getGraphCost(graph, 0);
 	}
-	public static float getGraphCost(Graph graph, boolean print) {
+	public static float getGraphCost(Graph graph, int print) {
 		float achievedII = longestZeroWeightedPath(graph);
 		float shiftSum = shiftSum(graph);
 		float weightedShiftSum = (float) (1 - Math.exp(-shiftSum/1000f));
@@ -261,7 +281,7 @@ public class SARetiming {
 			System.exit(1);
 		}
 		float cost = achievedII + weightedShiftSum;
-		if (print) {
+		if (print >= 2) {
 			//System.out.println("\t\t\tweightedShiftSum = " + weightedShiftSum);
 			System.out.println("\t\t\tCost = " + cost);
 		}
