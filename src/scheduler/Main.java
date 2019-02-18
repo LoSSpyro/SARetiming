@@ -27,10 +27,14 @@ public class Main {
 		
 		//defaultMain(g, args);
 		//saRetiming(g, args);
-		sweep(g);
+		//sweepOne(g);
+		sweepAll();
 	}
 	
-	public static void sweep(Graph graph) {
+	public static void sweepAll() {
+		Sweep.sweep(5);
+	}
+	public static void sweepOne(Graph graph) {
 		Sweep.multipleRuns(graph, 100, true);
 	}
 	

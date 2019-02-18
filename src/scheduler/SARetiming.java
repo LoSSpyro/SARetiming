@@ -437,6 +437,7 @@ public class SARetiming {
 	public class SARetimingResultPackage {
 		
 		public final Graph graph;
+		public final int graphSize;
 		public long wallclock;
 		public final boolean foundLooseNodes;
 		
@@ -445,12 +446,13 @@ public class SARetiming {
 		public final int initShiftMax, worstShiftMax, saShiftMax, bestShiftMax;
 		public final float initCost, worstCost, saCost, bestCost;
 		
-		public SARetimingResultPackage (Graph bestGraph, long wallclock, boolean foundLooseNodes,
+		public SARetimingResultPackage (Graph graph, long wallclock, boolean foundLooseNodes,
 				int initII, int worstII, int saII, int bestII,
 				int initShiftSum, int worstShiftSum, int saShiftSum, int bestShiftSum,
 				int initShiftMax, int worstShiftMax, int saShiftMax, int bestShiftMax,
 				float initCost, float worstCost, float saCost, float bestCost) {
-			this.graph = bestGraph;
+			this.graph = graph;
+			this.graphSize = graph.size();
 			this.wallclock = wallclock;
 			this.foundLooseNodes = foundLooseNodes;
 			
