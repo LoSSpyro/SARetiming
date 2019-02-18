@@ -31,7 +31,7 @@ public class Main {
 	}
 	
 	public static void sweep(Graph graph) {
-		Sweep.multipleRuns(graph, 5, true);
+		Sweep.multipleRuns(graph, 100, true);
 	}
 	
 	public static void saRetiming(Graph graph, String[] args) {
@@ -39,7 +39,6 @@ public class Main {
 		
 		SARetiming sa = new SARetiming(graph);
 		sa.setAllowShiftsGr1(true);
-		//sa.setSAParams(100, 0.1f, 10);
 		
 		SARetimingResultPackage resultPackage = sa.run(1);	// knapp 50% langsamer mit Ausgaben
 		resultPackage.printDiagnose();

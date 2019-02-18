@@ -49,7 +49,7 @@ public class SARetiming {
 		
 		long startTime = System.currentTimeMillis();
 		findInitTemp(print);
-		Graph graph = initGraph;
+		Graph graph = initGraph.clone();
 		float temp = initTemp;
 		
 		while (temp > stopTemp) {
@@ -59,14 +59,14 @@ public class SARetiming {
 			}
 			
 			for (int cntInner = 0; cntInner < innerLoopIterations; cntInner++) {
-				Graph candidate = doRandomMove(graph, print);
-				float newCost = getGraphCost(candidate, print);
+				RetimingMove move = generateRandomMove(graph, print);
+				move.execute();
+				float newCost = getGraphCost(graph, print);
 				float deltaCost = newCost - oldCost; // < 0: improvement
 				double r = Math.random();
 				double acceptProb = Math.exp(-1000*deltaCost / temp);
 				if (r < acceptProb) {
 					// accept candidate
-					graph = candidate;
 					oldCost = newCost;
 					acceptedChanges++;
 					if (print >= 2) {
@@ -75,7 +75,7 @@ public class SARetiming {
 					
 					if (newCost < minCost) {
 						minCost = newCost;
-						bestGraph = candidate;
+						bestGraph = graph.clone();
 					}
 					if (lastLongestPath > worstII) {
 						worstII = lastLongestPath;
@@ -83,13 +83,14 @@ public class SARetiming {
 					if (lastShiftSum > worstSum) {
 						worstSum = lastShiftSum;
 					}
-					if (shiftMax(candidate) > worstMax) {
+					if (shiftMax(graph) > worstMax) {
 						worstMax = lastShiftMax;
 					}
 					if (newCost > worstCost) {
 						worstCost = newCost;
 					}
 				} else if (print >= 2) {
+					move.reverse();
 					System.out.println("\t\t\tRejected move. r = " + r + " !< accProb = " + acceptProb);
 				}
 			}
@@ -119,7 +120,7 @@ public class SARetiming {
 	
 	private void findInitTemp(int print) {
 		float initTemp;
-		Graph graph = initGraph;
+		Graph graph = initGraph.clone();
 		
 		int tries = 0;
 		while (true) {
@@ -127,8 +128,10 @@ public class SARetiming {
 			float[] costs = new float[n];
 			float average = 0f;
 			for (int i = 0; i < n; i++) {
-				graph = doRandomMove(graph, print);
+				RetimingMove move = generateRandomMove(graph, print);
+				move.execute();
 				float cost = getGraphCost(graph, print);
+				move.reverse();
 				costs[i] = cost;
 				average += cost;
 			}
@@ -182,19 +185,16 @@ public class SARetiming {
 	}
 	
 	
-	private Graph doRandomMove(Graph graph, int print) {
-		Graph result = graph.clone();
-		
-		List<RetimingMove> possibleMoves = getPossibleMoves(result);
+	private RetimingMove generateRandomMove(Graph graph, int print) {
+		List<RetimingMove> possibleMoves = getPossibleMoves(graph);
 		int moveIndex = new Random().nextInt(possibleMoves.size());
 		RetimingMove move = possibleMoves.get(moveIndex);
 		
 		if (print >= 2) {
-			System.out.println("\t\tExecuting random " + move);
+			System.out.println("\t\tGenerated random " + move);
 		}
-		boolean success = move.execute();
 		
-		return success ? result : null;
+		return move;
 	}
 	
 	private List<RetimingMove> getPossibleMoves(Graph graph) {
@@ -388,7 +388,7 @@ public class SARetiming {
 		
 		public boolean execute() {
 			if (!isMoveValid(node, iterationShift) || wasExecuted) {
-				System.err.println("Warning: Move wasn't executed");
+				System.err.println("Warning: Move not valid or already executed");
 				return false;
 			}
 			
@@ -409,6 +409,7 @@ public class SARetiming {
 		
 		public boolean reverse() {
 			if (!wasExecuted) {
+				System.err.println("Warning: Move has not yet been executed, couldn't be reversed");
 				return false;
 			}
 			

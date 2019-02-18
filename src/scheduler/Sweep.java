@@ -24,7 +24,6 @@ public class Sweep {
 			}
 			if (resultPackage.bestCost > worstCost) {
 				worstCost = resultPackage.bestCost;
-				resultPackage.printDiagnose();
 			}
 			
 			System.out.println("Sweep:\t" + ((float) (i+1) / (float) runs * 100f) + "% done");
