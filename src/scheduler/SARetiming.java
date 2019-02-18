@@ -21,6 +21,7 @@ public class SARetiming {
 	private float initTemp;
 	private float stopTemp;
 	private float temp;
+	private boolean allowShiftsGr1;
 	private int innerLoopIterations;
 	private boolean foundLooseNodes;
 	
@@ -33,13 +34,13 @@ public class SARetiming {
 		initTemp = findInitTemp(false);
 		stopTemp = DEFAULT_STOP_TEMP;
 		innerLoopIterations = (int) Math.round(10 * Math.pow(initGraph.size(), 4./3.));
+		allowShiftsGr1 = true;
 		foundLooseNodes = false;
 	}
-	
-	public Graph run(float initTemp, float stopTemp, int innerNum, boolean print) {
-		setSAParams(initTemp, stopTemp, innerNum);
-		return run(print);
+	public void setAllowShiftsGr1(boolean allowShiftsGr1) {
+		this.allowShiftsGr1 = allowShiftsGr1;
 	}
+	
 	public Graph run(boolean print) {
 		graph = initGraph;
 		float oldCost = getGraphCost(graph, print);
@@ -104,7 +105,7 @@ public class SARetiming {
 		System.out.println("\n\n\tAchvdII\tShftSum\tShftMax\tCost");
 		System.out.println("Initial\t" + longestZeroWeightedPath(initGraph) + "\t" + shiftSum(initGraph) + "\t" + shiftMax(initGraph) + "\t" + getGraphCost(initGraph, false));
 		System.out.println("Worst\t" + worstII + "\t" + worstSum + "\t" + worstMax + "\t" + worstCost);
-		System.out.println("Final\t" + longestZeroWeightedPath(finalGraph) + "\t" + shiftSum(finalGraph) + "\t" + shiftMax(finalGraph) + "\t" + getGraphCost(finalGraph, false));
+		System.out.println("SAFinal\t" + longestZeroWeightedPath(finalGraph) + "\t" + shiftSum(finalGraph) + "\t" + shiftMax(finalGraph) + "\t" + getGraphCost(finalGraph, false));
 		System.out.println("Best\t" + longestZeroWeightedPath(bestGraph) + "\t" + shiftSum(bestGraph) + "\t" + shiftMax(bestGraph) + "\t" + getGraphCost(bestGraph, false));
 		System.out.println("\nWorst values do not necessarily come from the same graph.\n");
 		
@@ -174,10 +175,11 @@ public class SARetiming {
 		temp *= y;
 	}
 	
-	public void setSAParams(float initTemp, float stopTemp, int innerNum) {
+	public void setSAParams(float initTemp, float stopTemp, int innerNum, boolean allowShiftsGr1) {
 		this.initTemp = initTemp;
 		this.stopTemp = stopTemp;
 		innerLoopIterations = (int) Math.round(innerNum * Math.pow(initGraph.size(), 4./3.));
+		this.allowShiftsGr1 = allowShiftsGr1; 
 	}
 	
 	
@@ -203,32 +205,61 @@ public class SARetiming {
 			int minIn = Integer.MAX_VALUE;
 			int maxIn = Integer.MIN_VALUE;
 			for (Integer weight : node.allPredecessors().values()) {
-				minIn = Math.min(minIn, weight);
-				maxIn = Math.max(maxIn, weight);
+				if (weight < minIn) {
+					minIn = weight;
+				}
+				if (weight > maxIn) {
+					maxIn = weight;
+				}
 			}
 			int minOut = Integer.MAX_VALUE;
 			int maxOut = Integer.MIN_VALUE;
 			for (Integer weight : node.allSuccessors().values()) {
-				minOut = Math.min(minOut, weight);
-				maxOut = Math.max(maxOut, weight);
+				if (weight < minOut) {
+					minOut = weight;
+				}
+				if (weight > maxOut) {
+					maxOut = weight;
+				}
 			}
 
-			if (minIn == Integer.MAX_VALUE) {
+			if (minIn == Integer.MAX_VALUE || maxIn == Integer.MIN_VALUE) {
+				// no incoming edges
 				foundLooseNodes = true;
-				minIn = -LOOSE_NODE_SHIFT_MAX;
-				maxIn = LOOSE_NODE_SHIFT_MAX;
+				if (allowShiftsGr1) {
+					minIn = LOOSE_NODE_SHIFT_MAX;
+				} else {
+					minIn = minOut;
+					maxIn = -minOut;
+				}
 			}
-			if (minOut == Integer.MAX_VALUE) {
+			if (minOut == Integer.MAX_VALUE || maxOut == Integer.MIN_VALUE) {
+				// no outgoing edges
 				foundLooseNodes = true;
-				minOut = 1;
-				maxOut = 1;
+				if (allowShiftsGr1) {
+					minOut = LOOSE_NODE_SHIFT_MAX;
+				} else {
+					minOut = minIn;
+					maxOut = -minIn;
+				}
 			}
+			int oldMaxShift = maxIn > maxOut ? maxIn : maxOut;
 			
-			if (minIn == 1 && maxOut == 0) {
-				result.add(new RetimingMove(node, -1));
-			}
-			if (maxIn == 0 && minOut == 1) {
-				result.add(new RetimingMove(node, 1));
+			for (int iterShift = -minIn; iterShift <= minOut; iterShift++) {
+				int newMaxIn = maxIn + iterShift;
+				int newMaxOut = maxOut - iterShift;
+				int newMaxShift = newMaxIn > newMaxOut ? newMaxIn : newMaxOut;
+				
+				if (iterShift == 0) {
+					continue;
+				}
+				if (!allowShiftsGr1 && (newMaxShift > oldMaxShift && newMaxShift > 1)) {
+					// reject moves that worsen the maxShift AND result in a maxShift > 1
+					// moves that improve the maxShift (of the node in question) OR have a maxShift of 0 or 1 are accepted
+					// moves that don't change the maxShift are accepted as well
+					continue;
+				}
+				result.add(new RetimingMove(node, new Integer(iterShift)));
 			}
 		}
 		
@@ -361,13 +392,11 @@ public class SARetiming {
 			
 			for (Node predecessor : node.allPredecessors().keySet()) {
 				Integer newWeight = node.allPredecessors().get(predecessor).intValue() + iterationShift;
-				//System.out.println("\t\tSetting new weight " + newWeight + " for edge between " + predecessor + " and " + node + " (old weight: " + node.allPredecessors().get(predecessor).intValue() + ")");
 				node.prepend(predecessor, newWeight);
 				predecessor.append(node, newWeight);
 			}
 			for (Node successor : node.allSuccessors().keySet()) {
 				Integer newWeight = node.allSuccessors().get(successor).intValue() - iterationShift;
-				//System.out.println("\t\tSetting new weight " + newWeight + " for edge between " + node + " and " + successor + " (old weight: " + node.allSuccessors().get(successor).intValue() + ")");
 				node.append(successor, newWeight);
 				successor.prepend(node, newWeight);
 			}

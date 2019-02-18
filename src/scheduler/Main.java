@@ -31,6 +31,7 @@ public class Main {
 		System.out.println("\n\nRunning SA Retiming\n");
 		
 		SARetiming sa = new SARetiming(graph);
+		sa.setAllowShiftsGr1(true);
 		//sa.setSAParams(100, 0.1f, 10);
 		
 		long startTime = System.currentTimeMillis();
