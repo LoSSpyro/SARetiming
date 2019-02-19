@@ -77,7 +77,7 @@ public class Sweep {
 		long startTime = System.currentTimeMillis();
 		
 		try {
-			String dateTime = new SimpleDateFormat("yyyy-mm-dd_HH.mm.ss").format(Calendar.getInstance().getTime());
+			String dateTime = new SimpleDateFormat("yyyy-MM-dd_HH.mm.ss").format(Calendar.getInstance().getTime());
 			BufferedWriter writer = new BufferedWriter(new FileWriter("results/SweepResults_" + dateTime + ".csv"));
 			
 			writer.write("Graph,Size,Loose nodes,Loose node shift max,Allow shifts >1,Stop temperature,"

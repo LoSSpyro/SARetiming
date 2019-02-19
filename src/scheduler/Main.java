@@ -36,7 +36,14 @@ public class Main {
 	
 	public static void sweepAll() {
 		List<String> blacklist = new ArrayList<String>(1);
-		blacklist.add("serpent");
+		blacklist.add("lectureExample");
+		blacklist.add("lectureLIST");
+		blacklist.add("test");
+		blacklist.add("testCyclic");
+		blacklist.add("testIICyclic");
+		blacklist.add("serpent"); // unknown
+		blacklist.add("CubeHash512Digest-sixteenRounds-2-2891"); // 9m
+		blacklist.add("SerpentEngine-encryptBlock-51-2815"); // 25m 
 		
 		Sweep.sweep(1, true, blacklist);
 	}
