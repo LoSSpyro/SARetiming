@@ -49,8 +49,8 @@ public class Sweep {
 		System.out.println("Worst result:\t\t" + worstCost);
 	}
 	
-	public static void sweep(int runsPerGraph) {
-		System.out.println("\n\n\nDoing sweep over all graphs with " + runsPerGraph + " runs per graph.\n\n");
+	public static void sweep(int runsPerGraph, boolean allowShiftsGr1) {
+		System.out.println("\n\n\nDoing sweep over all graphs with " + runsPerGraph + " runs per graph.\nAllowShiftsGr1 = " + allowShiftsGr1 + "\n\n");
 		
 		File folder = new File("graphs");
 		File[] listOfFiles = folder.listFiles();
@@ -82,31 +82,17 @@ public class Sweep {
 				Graph graph = new Dot_reader(true).parse("graphs/" + graphFile);
 				String graphName = graphFile.substring(0, graphFile.lastIndexOf(".dot"));
 				SARetiming sa = new SARetiming(graph);
+				sa.setAllowShiftsGr1(allowShiftsGr1);
 				int skipCounter = 0;
 				graphCounter++;
 				
 				for (int run = 0; run < runsPerGraph; run++) {
-					SARetimingResultPackage res;
-					
-					sa.setAllowShiftsGr1(true);
 					System.out.print(new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
-					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = true");
+					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph);
 					try {
-						res = sa.run(0);
-						writer.write(compileSweepResultsLine(graphFile, run, res, true));
+						SARetimingResultPackage res = sa.run(0);
+						writer.write(compileSweepResultsLine(graphFile, run, res, allowShiftsGr1));
 					} catch (IllegalArgumentException e) {
-						System.err.println("Critical problem while running " + graphName + ". Skipping.");
-						skipCounter++;
-					}
-					
-					sa.setAllowShiftsGr1(false);
-					System.out.print(new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
-					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = false");
-					try {
-						res = sa.run(0);
-						writer.write(compileSweepResultsLine(graphFile, run, res, false));
-					} catch (IllegalArgumentException e) {
-						e.printStackTrace();
 						System.err.println("Critical problem while running " + graphName + ". Skipping.");
 						skipCounter++;
 					}

@@ -10,9 +10,9 @@ import java.util.Random;
 
 public class SARetiming {
 	
-	public static final float DEFAULT_STOP_TEMP = .5f;
+	public static final float STOP_TEMP = .5f;
 	// maximum change for the index shift of a node with either no predecessors or successors (so can be infinitely shifted)
-	public static final int LOOSE_NODE_SHIFT_MAX = 1;
+	public static final int LOOSE_NODE_SHIFT_MAX = 5;
 	
 	private static int lastLongestPath, lastShiftSum, lastShiftMax;
 	
@@ -20,14 +20,12 @@ public class SARetiming {
 	private Graph bestGraph;
 	private Graph saGraph;
 	private float initTemp;
-	private float stopTemp;
 	private boolean allowShiftsGr1;
 	private int innerLoopIterations;
 	private boolean foundLooseNodes;
 	
 	public SARetiming(Graph graph) {
 		initGraph = graph;
-		stopTemp = DEFAULT_STOP_TEMP;
 		innerLoopIterations = (int) Math.round(10 * Math.pow(initGraph.size(), 4./3.));
 		allowShiftsGr1 = true;
 		foundLooseNodes = false;
@@ -52,7 +50,7 @@ public class SARetiming {
 		Graph graph = initGraph.clone();
 		float temp = initTemp;
 		
-		while (temp > stopTemp) {
+		while (temp > STOP_TEMP) {
 			int acceptedChanges = 0;
 			if (print >= 1) {
 				System.out.println("\tDoing " + innerLoopIterations + " loops with temperature " + temp);
@@ -106,7 +104,7 @@ public class SARetiming {
 		this.saGraph = graph;
 		
 		if (print >= 1) {
-			System.out.println("\n\nFinished with temperature:\t" + temp + " < " + stopTemp);
+			System.out.println("\n\nFinished with temperature:\t" + temp + " < " + STOP_TEMP);
 			System.out.println("Initial temperature:\t\t" + initTemp + "\n");
 		}
 		
@@ -272,10 +270,10 @@ public class SARetiming {
 	public static float getGraphCost(Graph graph, int print) {
 		float achievedII = longestZeroWeightedPath(graph);
 		float shiftSum = shiftSum(graph);
-		float weightedShiftSum = (float) (1 - Math.exp(-shiftSum/1000f));
+		float weightedShiftSum = (float) (1 - Math.exp(-shiftSum/1000000f));
 		if (weightedShiftSum >= 1f) {
-			System.err.println("Warning: shift sum to big for scaling factor");
-			System.exit(1);
+			System.err.println("Warning: shift sum too big for scaling factor");
+			throw new RuntimeException();
 		}
 		float cost = achievedII + weightedShiftSum;
 		if (print >= 2) {

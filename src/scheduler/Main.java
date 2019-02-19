@@ -32,7 +32,7 @@ public class Main {
 	}
 	
 	public static void sweepAll() {
-		Sweep.sweep(5);
+		Sweep.sweep(1, true);
 	}
 	public static void sweepOne(Graph graph) {
 		Sweep.multipleRuns(graph, 100, true);
