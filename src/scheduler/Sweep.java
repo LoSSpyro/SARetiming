@@ -69,7 +69,8 @@ public class Sweep {
 			String dateTime = new SimpleDateFormat("yyyy-mm-dd_HH.mm.ss").format(Calendar.getInstance().getTime());
 			BufferedWriter writer = new BufferedWriter(new FileWriter("results/SweepResults_" + dateTime + ".csv"));
 			
-			writer.write("Graph,Size,Loose nodes,Allow shifts >1,Run,Runtime,"
+			writer.write("Graph,Size,Loose nodes,Loose node shift max,Allow shifts >1,Stop temperature,"
+					+ "Run,Initial temperature,Runtime,"
 					+ "Initial II,Initial shift sum,Best II,Best shift sum,"
 					+ "Initial shift max,Initial cost,Best shift max,Best cost,"
 					+ "SA II,SA shift sum,SA shift max,SA cost,"
@@ -123,7 +124,8 @@ public class Sweep {
 		StringBuilder sb = new StringBuilder();
 		String c = ",";
 		
-		// Graph,Size,Loose nodes,Allow shifts >1,Run,Runtime,
+		// Graph,Size,Loose nodes,Loose node shift max,Allow shifts >1,Stop temperature
+		// Run,Initial temperature,Runtime,
 		// Initial II,Initial shift sum,Best II,Best shift sum,
 		// Initial shift max,Initial cost,Best shift max,Best cost,
 		// SA II,SA shift sum,SA shift max,SA cost,
@@ -131,8 +133,11 @@ public class Sweep {
 		sb.append(graphFile)
 				.append(c).append(res.graphSize)
 				.append(c).append(res.foundLooseNodes)
+				.append(c).append(res.looseNodeShiftMax)
 				.append(c).append(allowShiftsGr1)
+				.append(c).append(res.stopTemp)
 				.append(c).append(run)
+				.append(c).append(res.initTemp)
 				.append(c).append(res.wallclock)
 				.append(c).append(res.initII)
 				.append(c).append(res.initShiftSum)
