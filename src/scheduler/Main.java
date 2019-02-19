@@ -1,5 +1,8 @@
 package scheduler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import scheduler.SARetiming.SARetimingResultPackage;
 
 public class Main {
@@ -32,7 +35,10 @@ public class Main {
 	}
 	
 	public static void sweepAll() {
-		Sweep.sweep(1, true);
+		List<String> blacklist = new ArrayList<String>(1);
+		blacklist.add("serpent");
+		
+		Sweep.sweep(1, true, blacklist);
 	}
 	public static void sweepOne(Graph graph) {
 		Sweep.multipleRuns(graph, 100, true);

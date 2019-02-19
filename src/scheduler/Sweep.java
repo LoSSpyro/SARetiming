@@ -49,7 +49,7 @@ public class Sweep {
 		System.out.println("Worst result:\t\t" + worstCost);
 	}
 	
-	public static void sweep(int runsPerGraph, boolean allowShiftsGr1) {
+	public static void sweep(int runsPerGraph, boolean allowShiftsGr1, List<String> graphBlacklist) {
 		System.out.println("\n\n\nDoing sweep over all graphs with " + runsPerGraph + " runs per graph.\nAllowShiftsGr1 = " + allowShiftsGr1 + "\n\n");
 		
 		File folder = new File("graphs");
@@ -57,8 +57,19 @@ public class Sweep {
 		List<String> graphFiles = new ArrayList<String>(listOfFiles.length);
 		for (int i = 0; i < listOfFiles.length; i++) {
 			if (listOfFiles[i].isFile()) {
+				String graphName = listOfFiles[i].getName().substring(0, listOfFiles[i].getName().lastIndexOf(".dot"));
 				System.out.println("Found file\t" + listOfFiles[i].getName());
-				graphFiles.add(listOfFiles[i].getName());
+				boolean blacklisted = false;
+				for (String item : graphBlacklist) {
+					if (item.equals(graphName)) {
+						System.out.println("\tGraph is on blacklist and will not be included in the sweep.");
+						blacklisted = true;
+						break;
+					}
+				}
+				if (!blacklisted) {
+					graphFiles.add(graphName);
+				}
 			}
 		}
 		System.out.println("\n\n\n");
@@ -79,9 +90,8 @@ public class Sweep {
 			int graphCounter = 0;
 			StringBuilder skippedGraphs = new StringBuilder().append("\nSkipped graphs:\n");
 			
-			for (String graphFile : graphFiles) {
-				Graph graph = new Dot_reader(true).parse("graphs/" + graphFile);
-				String graphName = graphFile.substring(0, graphFile.lastIndexOf(".dot"));
+			for (String graphName : graphFiles) {
+				Graph graph = new Dot_reader(true).parse("graphs/" + graphName + ".dot");
 				SARetiming sa = new SARetiming(graph);
 				sa.setAllowShiftsGr1(allowShiftsGr1);
 				int skipCounter = 0;
@@ -92,7 +102,7 @@ public class Sweep {
 					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph);
 					try {
 						SARetimingResultPackage res = sa.run(0);
-						writer.write(compileSweepResultsLine(graphFile, run, res, allowShiftsGr1));
+						writer.write(compileSweepResultsLine(graphName, run, res, allowShiftsGr1));
 					} catch (IllegalArgumentException e) {
 						System.err.println("Critical problem while running " + graphName + ". Skipping.");
 						skipCounter++;
@@ -120,7 +130,7 @@ public class Sweep {
 		System.out.println("\n\n\nSweep complete.\nIt took " + time + " hours");
 	}
 	
-	private static String compileSweepResultsLine(String graphFile, int run, SARetimingResultPackage res, boolean allowShiftsGr1) {
+	private static String compileSweepResultsLine(String graphName, int run, SARetimingResultPackage res, boolean allowShiftsGr1) {
 		StringBuilder sb = new StringBuilder();
 		String c = ",";
 		
@@ -130,7 +140,7 @@ public class Sweep {
 		// Initial shift max,Initial cost,Best shift max,Best cost,
 		// SA II,SA shift sum,SA shift max,SA cost,
 		// Worst II,Worst shift sum,Worst shift max,Worst cost
-		sb.append(graphFile)
+		sb.append(graphName)
 				.append(c).append(res.graphSize)
 				.append(c).append(res.foundLooseNodes)
 				.append(c).append(res.looseNodeShiftMax)
