@@ -75,21 +75,22 @@ public class Sweep {
 					+ "SA II,SA shift sum,SA shift max,SA cost,"
 					+ "Worst II,Worst shift sum,Worst shift max,Worst cost\n");
 			
+			int graphCounter = 0;
 			StringBuilder skippedGraphs = new StringBuilder().append("\nSkipped graphs:\n");
 			
 			for (String graphFile : graphFiles) {
 				Graph graph = new Dot_reader(true).parse("graphs/" + graphFile);
 				String graphName = graphFile.substring(0, graphFile.lastIndexOf(".dot"));
 				SARetiming sa = new SARetiming(graph);
-				int graphCounter = 0;
 				int skipCounter = 0;
+				graphCounter++;
 				
 				for (int run = 0; run < runsPerGraph; run++) {
 					SARetimingResultPackage res;
 					
 					sa.setAllowShiftsGr1(true);
 					System.out.print(new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
-					System.out.println(" - Running graph " + ++graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = true");
+					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph + ", allowShiftsGr1 = true");
 					try {
 						res = sa.run(0);
 						writer.write(compileSweepResultsLine(graphFile, run, res, true));
@@ -105,6 +106,7 @@ public class Sweep {
 						res = sa.run(0);
 						writer.write(compileSweepResultsLine(graphFile, run, res, false));
 					} catch (IllegalArgumentException e) {
+						e.printStackTrace();
 						System.err.println("Critical problem while running " + graphName + ". Skipping.");
 						skipCounter++;
 					}
