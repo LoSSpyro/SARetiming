@@ -49,7 +49,7 @@ public class Sweep {
 		System.out.println("Worst result:\t\t" + worstCost);
 	}
 	
-	public static void sweep(int runsPerGraph, boolean allowShiftsGr1, List<String> graphBlacklist) {
+	public static void sweep(int runsPerGraph, float stopTemp, boolean allowShiftsGr1, List<String> graphBlacklist) {
 		System.out.println("\n\n\nDoing sweep over all graphs with " + runsPerGraph + " runs per graph.\nAllowShiftsGr1 = " + allowShiftsGr1 + "\n\n");
 		
 		File folder = new File("graphs");
@@ -87,19 +87,19 @@ public class Sweep {
 					+ "SA II,SA shift sum,SA shift max,SA cost,"
 					+ "Worst II,Worst shift sum,Worst shift max,Worst cost\n");
 			
-			int graphCounter = 0;
+			int graphCounter = 1;
 			StringBuilder skippedGraphs = new StringBuilder().append("\nSkipped graphs:\n");
 			
 			for (String graphName : graphFiles) {
 				Graph graph = new Dot_reader(true).parse("graphs/" + graphName + ".dot");
 				SARetiming sa = new SARetiming(graph);
+				sa.setStopTemp(stopTemp);
 				sa.setAllowShiftsGr1(allowShiftsGr1);
 				int skipCounter = 0;
-				graphCounter++;
 				
-				for (int run = 0; run < runsPerGraph; run++) {
+				for (int run = 1; run <= runsPerGraph; run++) {
 					System.out.print(new SimpleDateFormat("HH:mm:ss").format(Calendar.getInstance().getTime()));
-					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + (run+1) + "/" + runsPerGraph);
+					System.out.println(" - Running graph " + graphCounter + "/" + graphFiles.size() + ": " + graphName + ", run " + run + "/" + runsPerGraph);
 					try {
 						SARetimingResultPackage res = sa.run(0);
 						writer.write(compileSweepResultsLine(graphName, run, res, allowShiftsGr1));
@@ -112,6 +112,8 @@ public class Sweep {
 				if (skipCounter > 0) {
 					skippedGraphs.append(graphName).append(": ").append(skipCounter).append(" times\n");
 				}
+				
+				graphCounter++;
 			}
 			
 			if (skippedGraphs.length() < 20) {

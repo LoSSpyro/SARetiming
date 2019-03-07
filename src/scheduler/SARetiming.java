@@ -10,7 +10,7 @@ import java.util.Random;
 
 public class SARetiming {
 	
-	public static final float STOP_TEMP = .5f;
+	public static final float DEFAULT_STOP_TEMP = .5f;
 	// maximum change for the index shift of a node with either no predecessors or successors (so can be infinitely shifted)
 	public static final int LOOSE_NODE_SHIFT_MAX = 5;
 	
@@ -20,6 +20,7 @@ public class SARetiming {
 	private Graph bestGraph;
 	private Graph saGraph;
 	private float initTemp;
+	private float stopTemp;
 	private boolean allowShiftsGr1;
 	private int innerLoopIterations;
 	private boolean foundLooseNodes;
@@ -29,9 +30,13 @@ public class SARetiming {
 		innerLoopIterations = (int) Math.round(10 * Math.pow(initGraph.size(), 4./3.));
 		allowShiftsGr1 = true;
 		foundLooseNodes = false;
+		stopTemp = DEFAULT_STOP_TEMP;
 	}
 	public void setAllowShiftsGr1(boolean allowShiftsGr1) {
 		this.allowShiftsGr1 = allowShiftsGr1;
+	}
+	public void setStopTemp(float stopTemp) {
+		this.stopTemp = stopTemp;
 	}
 	
 	public SARetimingResultPackage run(int print) {
@@ -50,7 +55,7 @@ public class SARetiming {
 		Graph graph = initGraph.clone();
 		float temp = initTemp;
 		
-		while (temp > STOP_TEMP) {
+		while (temp > stopTemp) {
 			int acceptedChanges = 0;
 			if (print >= 1) {
 				System.out.println("\tDoing " + innerLoopIterations + " loops with temperature " + temp);
@@ -72,7 +77,7 @@ public class SARetiming {
 					}
 					
 					if (newCost < minCost) {
-						minCost = newCost;
+						minCost = newCost; 
 						bestGraph = graph.clone();
 					}
 					if (lastLongestPath > worstII) {
@@ -104,13 +109,13 @@ public class SARetiming {
 		this.saGraph = graph;
 		
 		if (print >= 1) {
-			System.out.println("\n\nFinished with temperature:\t" + temp + " < " + STOP_TEMP);
+			System.out.println("\n\nFinished with temperature:\t" + temp + " < " + stopTemp);
 			System.out.println("Initial temperature:\t\t" + initTemp + "\n");
 		}
 		
 		
 		return new SARetimingResultPackage(bestGraph, foundLooseNodes, LOOSE_NODE_SHIFT_MAX,
-				wallclock, initTemp, STOP_TEMP,
+				wallclock, initTemp, stopTemp,
 				longestZeroWeightedPath(initGraph), worstII, longestZeroWeightedPath(graph), longestZeroWeightedPath(bestGraph),
 				shiftSum(initGraph), worstSum, shiftSum(graph), shiftSum(bestGraph),
 				shiftMax(initGraph), worstMax, shiftMax(graph), shiftMax(bestGraph),
@@ -253,7 +258,7 @@ public class SARetiming {
 				}
 				if (!allowShiftsGr1 && (newMaxShift > oldMaxShift && newMaxShift > 1)) {
 					// reject moves that worsen the maxShift AND result in a maxShift > 1
-					// moves that improve the maxShift (of the node in question) OR have a maxShift of 0 or 1 are accepted
+					// moves that improve the maxShift (of the node in question) OR have a maxShift of 1 are accepted
 					// moves that don't change the maxShift are accepted as well
 					continue;
 				}

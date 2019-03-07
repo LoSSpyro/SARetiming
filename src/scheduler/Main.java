@@ -29,9 +29,9 @@ public class Main {
 		System.out.println("Number of nodes: " + g.size());
 		
 		//defaultMain(g, args);
-		//saRetiming(g, args);
+		saRetiming(g, args);
 		//sweepOne(g);
-		sweepAll();
+		//sweepAll();
 	}
 	
 	public static void sweepAll() {
@@ -45,7 +45,11 @@ public class Main {
 		blacklist.add("CubeHash512Digest-sixteenRounds-2-2891"); // 9m
 		blacklist.add("SerpentEngine-encryptBlock-51-2815"); // 25m 
 		
-		Sweep.sweep(1, true, blacklist);
+		Sweep.sweep(10, 5f, false, blacklist);
+//		Sweep.sweep(10, 2f, false, blacklist);
+//		Sweep.sweep(10, 1f, false, blacklist);
+//		Sweep.sweep(10, .5f, false, blacklist);
+//		Sweep.sweep(10, .1f, false, blacklist);
 	}
 	public static void sweepOne(Graph graph) {
 		Sweep.multipleRuns(graph, 100, true);
