@@ -499,10 +499,10 @@ public class SARetiming {
 				System.out.println("MinII:\t" + minII.getMinII(graph, false));
 			}
 			if (bestII < saII) {
-				System.err.println("Caution: the best found solution wasn't delivered by SA!");
+				System.out.println("Caution: the best found solution wasn't delivered by SA!");
 			}
 			if (foundLooseNodes) {
-				System.err.println("Warning: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
+				System.out.println("Caution: Found loose node (no predecessors and/or successors). Used max shift " + LOOSE_NODE_SHIFT_MAX);
 			}
 			System.out.println("\nCalculation time: " + ((float) wallclock / 1000f) + "s");
 			System.out.println("\n\n\n");
